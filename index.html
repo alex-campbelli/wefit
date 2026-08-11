@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Nosotros Fit</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b0e14">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ff6b35'/%3E%3Cstop offset='1' stop-color='%2300c2a8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='%23141821'/%3E%3Cpath d='M28 66 L28 34 M72 66 L72 34 M28 50 L72 50' stroke='url(%23g)' stroke-width='9' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0b0e14; --bg-elev:#12151d; --card:#1a1f2b; --card2:#20263380;
+  --border:rgba(255,255,255,.07); --text:#f5f6f8; --dim:#9aa3b2; --faint:#5f6878;
+  --a:#ff6b35; --a-soft:#ff6b3522; --b:#00c2a8; --b-soft:#00c2a822;
+  --success:#34d399; --warn:#fbbf24; --danger:#f87171;
+  --radius:20px; --radius-sm:13px; --tabbar-h:64px;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root{ --bg:#f4f5f7; --bg-elev:#ffffff; --card:#ffffff; --card2:#eef0f3aa;
+    --border:rgba(0,0,0,.08); --text:#191c22; --dim:#5b6472; --faint:#8b93a1; }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; overscroll-behavior-y:none;}
+body{padding-bottom:calc(var(--tabbar-h) + var(--safe-b));}
+h1,h2,h3,p{margin:0;}
+button{font-family:inherit;}
+input,select,textarea{font-family:inherit;}
+::-webkit-scrollbar{display:none;}
+.hidden{display:none !important;}
+
+#app{max-width:520px;margin:0 auto;position:relative;min-height:100vh;}
+
+/* ---------- Top header ---------- */
+.topbar{padding:calc(14px + var(--safe-t)) 18px 12px;position:sticky;top:0;z-index:20;
+  background:linear-gradient(var(--bg) 75%, transparent); backdrop-filter:blur(6px);}
+.topbar h1{font-size:26px;font-weight:800;letter-spacing:-.3px;}
+.topbar .sub{color:var(--dim);font-size:13px;margin-top:2px;}
+
+.switcher{display:flex;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:4px;gap:4px;margin-top:12px;}
+.switcher button{flex:1;border:none;background:transparent;color:var(--dim);padding:9px 4px;border-radius:10px;font-size:13.5px;font-weight:700;transition:.2s;}
+.switcher button.active{background:var(--accent-bg,var(--a));color:#fff;}
+.switcher button.active[data-tone="b"]{background:var(--b);}
+.switcher button.active[data-tone="couple"]{background:linear-gradient(135deg,var(--a),var(--b));}
+
+/* ---------- Content ---------- */
+.content{padding:6px 18px 28px;}
+.section-title{font-size:19px;font-weight:800;margin:22px 0 10px;letter-spacing:-.2px;}
+.section-title.first{margin-top:6px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+.card-row{display:flex;align-items:center;justify-content:space-between;}
+.muted{color:var(--dim);font-size:13px;}
+.faint{color:var(--faint);font-size:12px;}
+
+/* ---------- Dashboard hero ---------- */
+.hero{border-radius:24px;padding:20px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,var(--hero-c1,#ff6b35),var(--hero-c2,#ff9a5a)); color:#fff; margin-bottom:14px;}
+.hero .name{font-size:15px;opacity:.85;font-weight:600;}
+.hero .weight{font-size:38px;font-weight:800;margin-top:2px;letter-spacing:-1px;}
+.hero .delta{font-size:13.5px;margin-top:4px;opacity:.92;font-weight:600;}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+.hero-pill{background:rgba(255,255,255,.16);border-radius:14px;padding:10px 12px;}
+.hero-pill .v{font-size:18px;font-weight:800;}
+.hero-pill .l{font-size:11px;opacity:.85;margin-top:1px;}
+
+.quick-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 20px;}
+.quick-btn{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.quick-btn .ic{font-size:20px;}
+.quick-btn .t{font-size:10.5px;font-weight:700;color:var(--dim);}
+
+.ring-wrap{display:flex;align-items:center;gap:16px;}
+.ring{position:relative;width:96px;height:96px;flex:none;}
+.ring svg{transform:rotate(-90deg);}
+.ring .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring .center b{font-size:19px;line-height:1;}
+.ring .center span{font-size:9.5px;color:var(--dim);margin-top:2px;}
+
+.macrobar{margin-top:10px;}
+.macrobar .row{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;}
+.barbg{height:8px;background:var(--card2);border-radius:6px;overflow:hidden;}
+.barfg{height:100%;border-radius:6px;transition:width .3s;}
+
+/* ---------- Tab bar ---------- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
+  background:rgba(20,24,33,.86); backdrop-filter:blur(20px) saturate(180%);
+  border-top:1px solid var(--border); padding-bottom:var(--safe-b);
+  max-width:520px;margin:0 auto;}
+@media (prefers-color-scheme:light){.tabbar{background:rgba(255,255,255,.86);}}
+.tabbar button{flex:1;border:none;background:transparent;color:var(--faint);padding:9px 0 7px;display:flex;flex-direction:column;align-items:center;gap:3px;height:var(--tabbar-h);}
+.tabbar button.active{color:var(--a);}
+.tabbar .ic{font-size:21px;}
+.tabbar .lb{font-size:10px;font-weight:700;}
+
+/* ---------- Buttons / forms ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:14px;padding:13px 18px;font-weight:800;font-size:15px;width:100%;background:var(--a);color:#fff;}
+.btn.secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+.btn.small{width:auto;padding:9px 14px;font-size:13.5px;border-radius:11px;}
+.btn.ghost{background:transparent;color:var(--a);border:1px solid var(--border);}
+.btn:disabled{opacity:.4;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:12.5px;color:var(--dim);font-weight:700;margin-bottom:5px;}
+.field input,.field select,.field textarea{width:100%;background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:11px 12px;color:var(--text);font-size:15px;}
+.field textarea{resize:vertical;min-height:60px;}
+.field-row{display:flex;gap:10px;}
+.field-row>.field{flex:1;}
+.seg{display:flex;background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:3px;gap:3px;}
+.seg button{flex:1;border:none;background:transparent;color:var(--dim);padding:9px 2px;border-radius:9px;font-size:12.5px;font-weight:700;}
+.seg button.active{background:var(--a);color:#fff;}
+.chiprow{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{border:1px solid var(--border);background:var(--bg-elev);color:var(--dim);padding:7px 12px;border-radius:20px;font-size:12.5px;font-weight:700;}
+.chip.active{background:var(--a);color:#fff;border-color:var(--a);}
+
+/* ---------- Lists ---------- */
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);}
+.list-item:last-child{border-bottom:none;}
+.list-item .li-l{display:flex;align-items:center;gap:10px;}
+.li-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--card2);flex:none;}
+.li-name{font-size:14.5px;font-weight:700;}
+.li-sub{font-size:12px;color:var(--dim);margin-top:1px;}
+.li-r{text-align:right;font-size:13px;font-weight:700;}
+.li-del{color:var(--faint);font-size:16px;padding:4px 8px;}
+
+/* ---------- Modal ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
+.modal{background:var(--bg-elev);width:100%;max-width:520px;border-radius:24px 24px 0 0;padding:18px 18px calc(20px + var(--safe-b));max-height:88vh;overflow-y:auto;animation:slideup .22s ease;}
+@keyframes slideup{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.modal-head h3{font-size:18px;font-weight:800;}
+.modal-close{background:var(--card2);border:none;color:var(--text);width:30px;height:30px;border-radius:50%;font-size:15px;}
+
+/* ---------- Calendar ---------- */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cal-head button{background:var(--card2);border:none;color:var(--text);width:30px;height:30px;border-radius:50%;font-size:15px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center;}
+.cal-dow{font-size:10.5px;color:var(--faint);font-weight:700;padding-bottom:3px;}
+.cal-day{aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;background:var(--card2);color:var(--dim);position:relative;}
+.cal-day.empty{background:transparent;}
+.cal-day.went{background:var(--success);color:#08130e;}
+.cal-day.today{box-shadow:0 0 0 2px var(--a) inset;}
+.cal-day.future{opacity:.35;}
+
+/* ---------- Stat grid ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.stat-box{background:var(--card2);border-radius:14px;padding:12px;}
+.stat-box .v{font-size:20px;font-weight:800;}
+.stat-box .l{font-size:11px;color:var(--dim);margin-top:2px;}
+
+/* ---------- Photos ---------- */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.photo-cell{aspect-ratio:3/4;border-radius:14px;overflow:hidden;position:relative;background:var(--card2);}
+.photo-cell img{width:100%;height:100%;object-fit:cover;}
+.photo-cell .tag{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;font-size:10px;font-weight:700;padding:12px 6px 5px;text-align:center;}
+.compare-wrap{position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:3/4;}
+.compare-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.compare-wrap .after{clip-path:inset(0 0 0 50%);}
+.compare-slider{position:absolute;inset:0;width:100%;height:100%;-webkit-appearance:none;appearance:none;background:transparent;margin:0;}
+.compare-slider::-webkit-slider-thumb{-webkit-appearance:none;width:34px;height:34px;border-radius:50%;background:#fff;border:3px solid var(--a);box-shadow:0 2px 8px rgba(0,0,0,.4);}
+.compare-line{position:absolute;top:0;bottom:0;width:3px;background:#fff;left:50%;pointer-events:none;transform:translateX(-50%);}
+
+/* ---------- Goal ---------- */
+.goal-bar-bg{height:10px;background:var(--card2);border-radius:6px;overflow:hidden;margin-top:8px;}
+.goal-bar-fg{height:100%;border-radius:6px;}
+.achieved-badge{display:inline-block;background:var(--success);color:#052e1c;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px;}
+
+/* ---------- Empty state ---------- */
+.empty{text-align:center;padding:30px 10px;color:var(--faint);}
+.empty .ic{font-size:32px;margin-bottom:8px;}
+.empty p{font-size:13.5px;}
+
+/* ---------- Onboarding ---------- */
+.onb-wrap{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:24px 22px calc(24px + var(--safe-b));}
+.onb-logo{font-size:44px;text-align:center;margin-bottom:6px;}
+.onb-title{font-size:26px;font-weight:800;text-align:center;letter-spacing:-.4px;}
+.onb-sub{text-align:center;color:var(--dim);font-size:14px;margin-top:6px;margin-bottom:26px;}
+.mode-card{border:1.5px solid var(--border);background:var(--card);border-radius:18px;padding:16px;margin-bottom:12px;display:flex;gap:12px;align-items:flex-start;}
+.mode-card.selected{border-color:var(--a);background:var(--a-soft);}
+.mode-card .ic{font-size:26px;}
+.mode-card h4{font-size:15.5px;font-weight:800;margin-bottom:3px;}
+.mode-card p{font-size:12.5px;color:var(--dim);}
+.progress-dots{display:flex;gap:5px;justify-content:center;margin-bottom:18px;}
+.progress-dots span{width:7px;height:7px;border-radius:50%;background:var(--card2);}
+.progress-dots span.on{background:var(--a);width:20px;border-radius:4px;}
+
+.toast{position:fixed;bottom:calc(var(--tabbar-h) + var(--safe-b) + 14px);left:50%;transform:translateX(-50%);
+  background:#1c2230;color:#fff;padding:11px 18px;border-radius:30px;font-size:13.5px;font-weight:700;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:200;border:1px solid rgba(255,255,255,.1);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+"use strict";
+
+/* ============================= DATA: FOOD DB ============================= */
+// values per 100g/100ml unless unit-based (gramsPerUnit given)
+const FOOD_DB = [
+ // Proteinas
+ {n:"Pechuga de pollo",c:"Proteina",k:165,p:31,cb:0,f:3.6},
+ {n:"Muslo de pollo",c:"Proteina",k:209,p:26,cb:0,f:10.9},
+ {n:"Carne de res magra",c:"Proteina",k:250,p:26,cb:0,f:15},
+ {n:"Carne molida 90/10",c:"Proteina",k:176,p:20,cb:0,f:10},
+ {n:"Salmon",c:"Proteina",k:208,p:20,cb:0,f:13},
+ {n:"Atun en agua",c:"Proteina",k:116,p:26,cb:0,f:1},
+ {n:"Tilapia",c:"Proteina",k:96,p:20,cb:0,f:1.7},
+ {n:"Camaron",c:"Proteina",k:99,p:24,cb:0.2,f:0.3},
+ {n:"Pavo pechuga",c:"Proteina",k:135,p:30,cb:0,f:1},
+ {n:"Cerdo lomo",c:"Proteina",k:143,p:26,cb:0,f:4},
+ {n:"Huevo entero",c:"Proteina",k:155,p:13,cb:1.1,f:11,unit:"unidad",g:50},
+ {n:"Clara de huevo",c:"Proteina",k:52,p:11,cb:0.7,f:0.2},
+ {n:"Tofu",c:"Proteina",k:76,p:8,cb:1.9,f:4.8},
+ {n:"Queso cottage",c:"Proteina",k:98,p:11,cb:3.4,f:4.3},
+ {n:"Yogur griego natural",c:"Proteina",k:59,p:10,cb:3.6,f:0.4},
+ {n:"Proteina whey (polvo)",c:"Proteina",k:380,p:80,cb:8,f:6,unit:"scoop",g:30},
+ {n:"Lentejas cocidas",c:"Proteina",k:116,p:9,cb:20,f:0.4},
+ {n:"Frijoles negros cocidos",c:"Proteina",k:132,p:8.9,cb:23,f:0.5},
+ {n:"Garbanzos cocidos",c:"Proteina",k:164,p:8.9,cb:27,f:2.6},
+ // Carbohidratos
+ {n:"Arroz blanco cocido",c:"Carbohidrato",k:130,p:2.7,cb:28,f:0.3},
+ {n:"Arroz integral cocido",c:"Carbohidrato",k:111,p:2.6,cb:23,f:0.9},
+ {n:"Pasta cocida",c:"Carbohidrato",k:131,p:5,cb:25,f:1.1},
+ {n:"Pan integral",c:"Carbohidrato",k:247,p:13,cb:41,f:3.4,unit:"rebanada",g:30},
+ {n:"Pan blanco",c:"Carbohidrato",k:265,p:9,cb:49,f:3.2,unit:"rebanada",g:28},
+ {n:"Avena cruda",c:"Carbohidrato",k:389,p:17,cb:66,f:7},
+ {n:"Papa cocida",c:"Carbohidrato",k:87,p:1.9,cb:20,f:0.1},
+ {n:"Camote / batata cocido",c:"Carbohidrato",k:90,p:2,cb:21,f:0.1},
+ {n:"Tortilla de maiz",c:"Carbohidrato",k:218,p:5.7,cb:44,f:2.5,unit:"unidad",g:30},
+ {n:"Tortilla de harina",c:"Carbohidrato",k:310,p:8,cb:50,f:8,unit:"unidad",g:45},
+ {n:"Quinoa cocida",c:"Carbohidrato",k:120,p:4.4,cb:21,f:1.9},
+ {n:"Platano maduro cocido",c:"Carbohidrato",k:122,p:1.3,cb:32,f:0.2},
+ // Frutas
+ {n:"Manzana",c:"Fruta",k:52,p:0.3,cb:14,f:0.2,unit:"unidad",g:180},
+ {n:"Banana",c:"Fruta",k:89,p:1.1,cb:23,f:0.3,unit:"unidad",g:120},
+ {n:"Fresas",c:"Fruta",k:32,p:0.7,cb:7.7,f:0.3},
+ {n:"Naranja",c:"Fruta",k:47,p:0.9,cb:12,f:0.1,unit:"unidad",g:150},
+ {n:"Uvas",c:"Fruta",k:69,p:0.7,cb:18,f:0.2},
+ {n:"Pina",c:"Fruta",k:50,p:0.5,cb:13,f:0.1},
+ {n:"Mango",c:"Fruta",k:60,p:0.8,cb:15,f:0.4},
+ {n:"Sandia",c:"Fruta",k:30,p:0.6,cb:8,f:0.2},
+ {n:"Papaya",c:"Fruta",k:43,p:0.5,cb:11,f:0.3},
+ {n:"Aguacate",c:"Fruta",k:160,p:2,cb:8.5,f:15},
+ {n:"Kiwi",c:"Fruta",k:61,p:1.1,cb:15,f:0.5,unit:"unidad",g:75},
+ // Verduras
+ {n:"Brocoli",c:"Verdura",k:34,p:2.8,cb:7,f:0.4},
+ {n:"Espinaca",c:"Verdura",k:23,p:2.9,cb:3.6,f:0.4},
+ {n:"Tomate",c:"Verdura",k:18,p:0.9,cb:3.9,f:0.2},
+ {n:"Lechuga",c:"Verdura",k:15,p:1.4,cb:2.9,f:0.2},
+ {n:"Zanahoria",c:"Verdura",k:41,p:0.9,cb:10,f:0.2},
+ {n:"Pepino",c:"Verdura",k:15,p:0.7,cb:3.6,f:0.1},
+ {n:"Cebolla",c:"Verdura",k:40,p:1.1,cb:9.3,f:0.1},
+ {n:"Pimiento",c:"Verdura",k:31,p:1,cb:6,f:0.3},
+ {n:"Champinones",c:"Verdura",k:22,p:3.1,cb:3.3,f:0.3},
+ {n:"Calabacin",c:"Verdura",k:17,p:1.2,cb:3.1,f:0.3},
+ {n:"Coliflor",c:"Verdura",k:25,p:1.9,cb:5,f:0.3},
+ {n:"Elote / maiz",c:"Verdura",k:96,p:3.4,cb:21,f:1.5},
+ // Lacteos
+ {n:"Leche entera",c:"Lacteo",k:61,p:3.2,cb:4.8,f:3.3},
+ {n:"Leche descremada",c:"Lacteo",k:34,p:3.4,cb:5,f:0.1},
+ {n:"Queso fresco",c:"Lacteo",k:264,p:18,cb:3,f:20},
+ {n:"Queso mozzarella",c:"Lacteo",k:280,p:28,cb:3,f:17},
+ {n:"Yogur natural",c:"Lacteo",k:61,p:3.5,cb:4.7,f:3.3},
+ {n:"Queso crema",c:"Lacteo",k:342,p:6,cb:4,f:34},
+ // Grasas
+ {n:"Aceite de oliva",c:"Grasa",k:884,p:0,cb:0,f:100},
+ {n:"Mantequilla de mani",c:"Grasa",k:588,p:25,cb:20,f:50},
+ {n:"Almendras",c:"Grasa",k:579,p:21,cb:22,f:50},
+ {n:"Nueces",c:"Grasa",k:654,p:15,cb:14,f:65},
+ {n:"Chia",c:"Grasa",k:486,p:17,cb:42,f:31},
+ {n:"Mantequilla",c:"Grasa",k:717,p:0.9,cb:0.1,f:81},
+ // Snacks
+ {n:"Galletas integrales",c:"Snack",k:400,p:8,cb:68,f:10},
+ {n:"Barra de proteina",c:"Snack",k:350,p:30,cb:35,f:10,unit:"unidad",g:60},
+ {n:"Chocolate negro 70%",c:"Snack",k:598,p:7.8,cb:46,f:43},
+ {n:"Palomitas naturales",c:"Snack",k:375,p:11,cb:74,f:4.5},
+ {n:"Papas fritas",c:"Snack",k:536,p:7,cb:53,f:35},
+ // Bebidas
+ {n:"Agua",c:"Bebida",k:0,p:0,cb:0,f:0},
+ {n:"Cafe negro",c:"Bebida",k:1,p:0.1,cb:0,f:0},
+ {n:"Batido de proteina (agua)",c:"Bebida",k:110,p:20,cb:4,f:1,unit:"batido",g:250},
+ {n:"Jugo de naranja natural",c:"Bebida",k:45,p:0.7,cb:10,f:0.2},
+ {n:"Refresco",c:"Bebida",k:41,p:0,cb:10.6,f:0},
+ {n:"Bebida isotonica",c:"Bebida",k:24,p:0,cb:6,f:0},
+ {n:"Leche de almendra",c:"Bebida",k:17,p:0.6,cb:0.6,f:1.5},
+];
+const FOOD_CATS = ["Proteina","Carbohidrato","Fruta","Verdura","Lacteo","Grasa","Snack","Bebida"];
+const MEAL_TYPES = [{k:"desayuno",l:"Desayuno",ic:"🌅"},{k:"almuerzo",l:"Almuerzo",ic:"🍽️"},{k:"cena",l:"Cena",ic:"🌙"},{k:"snack",l:"Snacks",ic:"🍎"},{k:"bebida",l:"Bebidas",ic:"🥤"}];
+const ACTIVITY_LEVELS = [
+ {k:"sedentario",l:"Sedentario",d:"Poco o ningun ejercicio",m:1.2},
+ {k:"ligero",l:"Ligero",d:"Ejercicio 1-3 dias/semana",m:1.375},
+ {k:"moderado",l:"Moderado",d:"Ejercicio 3-5 dias/semana",m:1.55},
+ {k:"activo",l:"Activo",d:"Ejercicio 6-7 dias/semana",m:1.725},
+ {k:"muyactivo",l:"Muy activo",d:"Ejercicio intenso diario / fisico",m:1.9},
+];
+const GOALS_OBJ = [
+ {k:"perder",l:"Perder peso",adj:-450},
+ {k:"mantener",l:"Mantener peso",adj:0},
+ {k:"ganar",l:"Ganar musculo",adj:350},
+];
+const MUSCLE_GROUPS = ["Pecho","Espalda","Piernas","Hombros","Brazos","Core","Cardio"];
+const EXERCISES_BY_GROUP = {
+ Pecho:["Press de banca","Press inclinado","Aperturas","Fondos","Press con mancuernas"],
+ Espalda:["Dominadas","Remo con barra","Jalon al pecho","Remo con mancuerna","Peso muerto"],
+ Piernas:["Sentadilla","Prensa","Zancadas","Extension de cuadriceps","Curl femoral","Peso muerto rumano"],
+ Hombros:["Press militar","Elevaciones laterales","Elevaciones frontales","Pajaros"],
+ Brazos:["Curl de biceps","Press frances","Curl martillo","Extension de triceps"],
+ Core:["Plancha","Crunch","Elevacion de piernas","Russian twist"],
+ Cardio:["Cinta","Bicicleta","Eliptica","Remo","Escaladora"],
+};
+const PROFILE_COLORS = ["#ff6b35","#00c2a8"];
+const PHOTO_LABELS = ["Dia 1","Semana 2","Mes 1","Mes 2","Mes 3","Mes 4","Mes 5","Mes 6","Mes 9","Mes 12","Otro"];
+const GOAL_TYPES = [
+ {k:"peso",l:"Bajar / subir X kg",ic:"⚖️"},
+ {k:"pesoobjetivo",l:"Llegar a un peso especifico",ic:"🎯"},
+ {k:"asistencia",l:"Asistir X dias al gimnasio",ic:"📅"},
+ {k:"racha",l:"Mantener una racha de X dias",ic:"🔥"},
+ {k:"proteina",l:"Consumir X g de proteina/dia",ic:"🍗"},
+ {k:"ejercicio",l:"Mejorar peso en un ejercicio",ic:"💪"},
+];
+
+const STORAGE_KEY = "nosotrosfit_v1";
+
+/* ============================= STATE ============================= */
+let state = loadState();
+function defaultState(){
+ return {onboarded:false, mode:null, activeProfileId:null, coupleStartDate:null,
+  profiles:{}, weights:[], foodLog:[], attendance:[], workouts:[], photos:[], goals:[],
+  ui:{tab:"inicio", scope:"me", trainSub:"asistencia", progSub:"peso", calYear:new Date().getFullYear(), calMonth:new Date().getMonth()}};
+}
+function loadState(){
+ try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw){ const d=JSON.parse(raw); d.ui = d.ui || defaultState().ui; return d; } }catch(e){}
+ return defaultState();
+}
+function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ toast("No se pudo guardar (almacenamiento lleno)"); } }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(s){ const d=new Date(s+"T00:00:00"); return d.toLocaleDateString("es-ES",{day:"numeric",month:"short"}); }
+function fmtDateLong(s){ const d=new Date(s+"T00:00:00"); return d.toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"}); }
+function daysBetween(a,b){ return Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000); }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function round1(v){ return Math.round(v*10)/10; }
+
+/* ============================= DERIVED ============================= */
+function profileIds(){ return Object.keys(state.profiles); }
+function getProfile(id){ return state.profiles[id]; }
+function getActiveProfile(){ return state.profiles[state.activeProfileId]; }
+function getPartnerId(){ const ids=profileIds(); return ids.find(id=>id!==state.activeProfileId); }
+function profileColor(id){ const idx = profileIds().indexOf(id); return PROFILE_COLORS[idx===-1?0:idx]; }
+
+function calcTDEE(profile){
+ const {weight, height, age, sex, activity} = {weight:profile.currentWeight, height:profile.height, age:profile.age, sex:profile.sex, activity:profile.activityLevel};
+ let tmb = sex==="M" ? (10*weight + 6.25*height - 5*age + 5) : (10*weight + 6.25*height - 5*age - 161);
+ const lvl = ACTIVITY_LEVELS.find(l=>l.k===activity) || ACTIVITY_LEVELS[1];
+ return tmb * lvl.m;
+}
+function calcCalorieTarget(profile){
+ const tdee = calcTDEE(profile);
+ const obj = GOALS_OBJ.find(o=>o.k===profile.objective) || GOALS_OBJ[1];
+ return Math.round(tdee + obj.adj);
+}
+function calcMacroTargets(profile){
+ const kcal = calcCalorieTarget(profile);
+ // protein 1.8g/kg, fat 25% kcal, rest carbs
+ const protein = Math.round(profile.currentWeight * 1.8);
+ const fatKcal = kcal*0.25; const fat = Math.round(fatKcal/9);
+ const carbKcal = kcal - protein*4 - fatKcal; const carbs = Math.round(Math.max(carbKcal,0)/4);
+ return {kcal, protein, carbs, fat};
+}
+function nutritionToday(profileId, date){
+ date = date || todayStr();
+ const entries = state.foodLog.filter(e=>e.profileId===profileId && e.date===date);
+ const sum = entries.reduce((a,e)=>({kcal:a.kcal+e.kcal, protein:a.protein+e.protein, carbs:a.carbs+e.carbs, fat:a.fat+e.fat}),{kcal:0,protein:0,carbs:0,fat:0});
+ return {entries, sum};
+}
+function weightStats(profileId){
+ const list = state.weights.filter(w=>w.profileId===profileId).sort((a,b)=>a.date.localeCompare(b.date));
+ const profile = getProfile(profileId);
+ const current = list.length ? list[list.length-1].weight : profile.currentWeight;
+ const initial = profile.initialWeight;
+ const prev = list.length>1 ? list[list.length-2].weight : initial;
+ return {list, current, initial, deltaStart: round1(current-initial), deltaLast: round1(current-prev)};
+}
+function attendanceStats(profileId){
+ const dates = state.attendance.filter(a=>a.profileId===profileId).map(a=>a.date).sort();
+ const set = new Set(dates);
+ // current streak (consecutive days up to today or yesterday)
+ let streak=0; let cursor=new Date();
+ for(;;){ const ds=cursor.toISOString().slice(0,10); if(set.has(ds)){streak++; cursor.setDate(cursor.getDate()-1);} else if(ds===todayStr()){cursor.setDate(cursor.getDate()-1); continue;} else break; }
+ // best streak
+ let best=0, run=0, prevD=null;
+ dates.forEach(d=>{ if(prevD && daysBetween(prevD,d)===1) run++; else run=1; if(run>best) best=run; prevD=d; });
+ const now = new Date(); const thisMonth = dates.filter(d=>{ const dd=new Date(d+"T00:00:00"); return dd.getFullYear()===now.getFullYear() && dd.getMonth()===now.getMonth(); }).length;
+ const start = getProfile(profileId).startDate || dates[0] || todayStr();
+ const totalDaysSince = Math.max(1, daysBetween(start, todayStr())+1);
+ const pct = Math.round((dates.length/totalDaysSince)*100);
+ const last24start = new Date(); last24start.setDate(last24start.getDate()-23);
+ const last24count = dates.filter(d=> new Date(d+"T00:00:00") >= last24start).length;
+ return {dates, total:dates.length, streak, best, thisMonth, pct:clamp(pct,0,100), last24count};
+}
+function exerciseHistory(profileId, exercise){
+ return state.workouts.filter(w=>w.profileId===profileId && w.exercise===exercise).sort((a,b)=>a.date.localeCompare(b.date));
+}
+function coupleStats(){
+ const ids = profileIds(); if(ids.length<2) return null;
+ const [a,b] = ids;
+ const attA = new Set(state.attendance.filter(x=>x.profileId===a).map(x=>x.date));
+ const attB = new Set(state.attendance.filter(x=>x.profileId===b).map(x=>x.date));
+ const together = [...attA].filter(d=>attB.has(d)).sort();
+ let streak=0; let cursor=new Date();
+ for(;;){ const ds=cursor.toISOString().slice(0,10); if(together.includes(ds)){streak++; cursor.setDate(cursor.getDate()-1);} else if(ds===todayStr()){cursor.setDate(cursor.getDate()-1); continue;} else break; }
+ const start = state.coupleStartDate || todayStr();
+ const daysSince = Math.max(0, daysBetween(start, todayStr()));
+ return {jointDays:together.length, streak, daysSince, totalA:attA.size, totalB:attB.size};
+}
+
+/* ============================= RENDER SHELL ============================= */
+const app = document.getElementById("app");
+function render(){
+ if(!state.onboarded){ app.innerHTML = renderOnboarding(); bindOnboarding(); return; }
+ app.innerHTML = renderShell();
+ bindShell();
+}
+function toast(msg){
+ const el=document.createElement("div"); el.className="toast"; el.textContent=msg;
+ document.body.appendChild(el); setTimeout(()=>el.remove(),2200);
+}
+
+/* ============================= ONBOARDING ============================= */
+let onbState = {step:0, mode:null, profiles:[{},{}], coupleStart: todayStr()};
+function renderOnboarding(){
+ const steps = onbState.mode==="pareja" ? 3 : 2;
+ if(onbState.step===0) return onbStepMode();
+ if(onbState.step===1) return onbStepProfile(0);
+ if(onbState.step===2 && onbState.mode==="pareja") return onbStepProfile(1);
+ return onbStepDone();
+}
+function onbStepMode(){
+ return `<div class="onb-wrap">
+  <div class="onb-logo">💪</div>
+  <div class="onb-title">Nosotros Fit</div>
+  <div class="onb-sub">Su progreso, su ritmo, su historia.</div>
+  <div class="mode-card ${onbState.mode==='solo'?'selected':''}" data-mode="solo">
+    <div class="ic">🧍</div><div><h4>Uso individual</h4><p>Solo tu registras tu progreso. Podras invitar a tu pareja despues.</p></div>
+  </div>
+  <div class="mode-card ${onbState.mode==='pareja'?'selected':''}" data-mode="pareja">
+    <div class="ic">💑</div><div><h4>Uso en pareja</h4><p>Registran su progreso por separado y ven estadisticas conjuntas.</p></div>
+  </div>
+  <div style="height:10px"></div>
+  <button class="btn" id="onbNext" ${!onbState.mode?'disabled':''}>Continuar</button>
+ </div>`;
+}
+function onbStepProfile(idx){
+ const p = onbState.profiles[idx] || {};
+ const isSecond = idx===1;
+ return `<div class="onb-wrap">
+  <div class="progress-dots">${Array.from({length: onbState.mode==='pareja'?3:2}).map((_,i)=>`<span class="${i<=onbState.step?'on':''}"></span>`).join('')}</div>
+  <div class="onb-title" style="font-size:22px">${isSecond? "Perfil de tu pareja" : "Tu perfil"}</div>
+  <div class="onb-sub">${isSecond? "Ahora los datos de la otra persona" : "Cuentanos un poco sobre ti"}</div>
+  <div class="field"><label>Nombre</label><input id="f_name" value="${p.name||''}" placeholder="Nombre"></div>
+  <div class="field-row">
+    <div class="field"><label>Edad</label><input id="f_age" type="number" value="${p.age||''}" placeholder="Anos"></div>
+    <div class="field"><label>Sexo</label><select id="f_sex"><option value="M" ${p.sex==='M'?'selected':''}>Hombre</option><option value="F" ${p.sex==='F'?'selected':''}>Mujer</option></select></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Altura (cm)</label><input id="f_height" type="number" value="${p.height||''}" placeholder="170"></div>
+    <div class="field"><label>Peso actual (kg)</label><input id="f_weight" type="number" step="0.1" value="${p.weight||''}" placeholder="70"></div>
+  </div>
+  <div class="field"><label>Meta de peso (kg) — opcional</label><input id="f_goalweight" type="number" step="0.1" value="${p.goalWeight||''}" placeholder="Ej. 65"></div>
+  <div class="field"><label>Objetivo</label><select id="f_objective">${GOALS_OBJ.map(o=>`<option value="${o.k}" ${p.objective===o.k?'selected':''}>${o.l}</option>`).join('')}</select></div>
+  <div class="field"><label>Nivel de actividad</label><select id="f_activity">${ACTIVITY_LEVELS.map(a=>`<option value="${a.k}" ${p.activity===a.k?'selected':''}>${a.l} — ${a.d}</option>`).join('')}</select></div>
+  <div class="field"><label>Fecha de inicio en el gimnasio</label><input id="f_start" type="date" value="${p.start||todayStr()}"></div>
+  <div style="height:6px"></div>
+  <button class="btn" id="onbNext">${isSecond? 'Finalizar configuracion' : (onbState.mode==='pareja'?'Continuar':'Finalizar configuracion')}</button>
+  <button class="btn secondary" id="onbBack" style="margin-top:8px">Atras</button>
+ </div>`;
+}
+function onbStepDone(){
+ return `<div class="onb-wrap" style="text-align:center">
+  <div class="onb-logo">🎉</div>
+  <div class="onb-title">Todo listo</div>
+  <div class="onb-sub">Su espacio de progreso esta configurado.</div>
+  <button class="btn" id="onbFinish">Ir al dashboard</button>
+ </div>`;
+}
+function bindOnboarding(){
+ const modeCards = app.querySelectorAll(".mode-card");
+ modeCards.forEach(c=>c.addEventListener("click",()=>{ onbState.mode=c.dataset.mode; render(); }));
+ const next = document.getElementById("onbNext");
+ if(next) next.addEventListener("click", ()=>{
+  if(onbState.step===0){ onbState.step=1; render(); return; }
+  const idx = onbState.step-1;
+  const name=document.getElementById("f_name").value.trim();
+  if(!name){ toast("Escribe un nombre"); return; }
+  onbState.profiles[idx] = {
+   name, age:+document.getElementById("f_age").value||25, sex:document.getElementById("f_sex").value,
+   height:+document.getElementById("f_height").value||170, weight:+document.getElementById("f_weight").value||70,
+   goalWeight:document.getElementById("f_goalweight").value? +document.getElementById("f_goalweight").value : null,
+   objective:document.getElementById("f_objective").value, activity:document.getElementById("f_activity").value,
+   start:document.getElementById("f_start").value||todayStr(),
+  };
+  if(onbState.mode==="pareja" && idx===0){ onbState.step=2; render(); return; }
+  finalizeOnboarding();
+ });
+ const back = document.getElementById("onbBack");
+ if(back) back.addEventListener("click", ()=>{ onbState.step = onbState.step>0? onbState.step-1:0; render(); });
+ const finish = document.getElementById("onbFinish");
+ if(finish) finish.addEventListener("click", ()=>{ state.onboarded=true; saveState(); render(); });
+}
+function finalizeOnboarding(){
+ state.mode = onbState.mode;
+ state.profiles = {};
+ onbState.profiles.slice(0, onbState.mode==="pareja"?2:1).forEach(p=>{
+  const id = uid();
+  state.profiles[id] = {name:p.name, age:p.age, sex:p.sex, height:p.height, initialWeight:p.weight, currentWeight:p.weight,
+   goalWeight:p.goalWeight, objective:p.objective, activityLevel:p.activity, startDate:p.start};
+ });
+ const ids = Object.keys(state.profiles);
+ state.activeProfileId = ids[0];
+ if(state.mode==="pareja") state.coupleStartDate = todayStr();
+ state.weights.push({id:uid(), profileId:ids[0], date:onbState.profiles[0].start, weight:onbState.profiles[0].weight});
+ if(ids[1]) state.weights.push({id:uid(), profileId:ids[1], date:onbState.profiles[1].start, weight:onbState.profiles[1].weight});
+ saveState();
+ onbState.step = state.mode==="pareja"?3:2;
+ render();
+}
+
+/* ============================= SHELL ============================= */
+function renderShell(){
+ const tab = state.ui.tab;
+ let body="";
+ if(tab==="inicio") body = renderInicio();
+ else if(tab==="nutricion") body = renderNutricion();
+ else if(tab==="entreno") body = renderEntreno();
+ else if(tab==="progreso") body = renderProgreso();
+ else if(tab==="perfil") body = renderPerfil();
+
+ const tabs = [
+  {k:"inicio",ic:"🏠",l:"Inicio"},{k:"nutricion",ic:"🍽️",l:"Nutricion"},
+  {k:"entreno",ic:"🏋️",l:"Entreno"},{k:"progreso",ic:"📈",l:"Progreso"},{k:"perfil",ic:"👤",l:"Perfil"}];
+
+ return `${body}
+ <div class="tabbar">
+  ${tabs.map(t=>`<button class="${tab===t.k?'active':''}" data-tab="${t.k}"><span class="ic">${t.ic}</span><span class="lb">${t.l}</span></button>`).join('')}
+ </div>`;
+}
+function bindShell(){
+ app.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>{ state.ui.tab=b.dataset.tab; render(); window.scrollTo(0,0); }));
+ bindGlobalActions();
+ bindTabSpecific();
+}
+function scopeSwitcher(){
+ const isPareja = state.mode==="pareja";
+ if(!isPareja) return "";
+ const partner = getPartnerId();
+ const me = getActiveProfile();
+ const p2 = getProfile(partner);
+ return `<div class="switcher">
+  <button class="${state.ui.scope==='me'?'active':''}" data-tone="a" data-scope="me">${me.name}</button>
+  <button class="${state.ui.scope==='partner'?'active':''}" data-tone="b" data-scope="partner">${p2.name}</button>
+  <button class="${state.ui.scope==='couple'?'active':''}" data-tone="couple" data-scope="couple">Nosotros</button>
+ </div>`;
+}
+function bindGlobalActions(){
+ app.querySelectorAll("[data-scope]").forEach(b=>b.addEventListener("click",()=>{ state.ui.scope=b.dataset.scope; render(); }));
+ app.querySelectorAll("[data-quick]").forEach(b=>b.addEventListener("click",()=>openQuick(b.dataset.quick)));
+ app.querySelectorAll("[data-close-modal]").forEach(b=>b.addEventListener("click", closeModal));
+}
+function scopedProfileId(){
+ if(state.ui.scope==="partner") return getPartnerId();
+ return state.activeProfileId;
+}
+
+/* ============================= INICIO (DASHBOARD) ============================= */
+function renderInicio(){
+ const showCouple = state.mode==="pareja" && state.ui.scope==="couple";
+ let content;
+ if(showCouple) content = renderCoupleDashboard();
+ else content = renderPersonDashboard(scopedProfileId());
+ return `<div class="topbar">
+  <h1>Hola${state.mode==='pareja'&&state.ui.scope!=='couple' ? ', '+getProfile(scopedProfileId()).name : ''} 👋</h1>
+  <div class="sub">${fmtDateLong(todayStr())}</div>
+  ${scopeSwitcher()}
+ </div>
+ <div class="content">${content}</div>`;
+}
+function renderPersonDashboard(pid){
+ const profile = getProfile(pid);
+ const ws = weightStats(pid);
+ const nut = nutritionToday(pid);
+ const targets = calcMacroTargets(profile);
+ const att = attendanceStats(pid);
+ const lastPhoto = state.photos.filter(p=>p.profileId===pid).sort((a,b)=>b.date.localeCompare(a.date))[0];
+ const activeGoal = state.goals.filter(g=>g.profileId===pid && !g.achieved)[0];
+ const color = profileColor(pid);
+ const deltaTxt = ws.deltaStart===0? "Sin cambios aun" : (ws.deltaStart<0? `${Math.abs(ws.deltaStart)} kg perdidos desde el inicio` : `${ws.deltaStart} kg desde el inicio`);
+ const pct = clamp(Math.round((nut.sum.kcal/targets.kcal)*100),0,999);
+ return `
+ <div class="hero" style="--hero-c1:${color};--hero-c2:${color}cc">
+  <div class="name">${profile.name}</div>
+  <div class="weight">${ws.current} kg</div>
+  <div class="delta">${deltaTxt}</div>
+  <div class="hero-grid">
+   <div class="hero-pill"><div class="v">${Math.max(targets.kcal-nut.sum.kcal,0)}</div><div class="l">kcal restantes hoy</div></div>
+   <div class="hero-pill"><div class="v">${Math.round(nut.sum.protein)}g</div><div class="l">proteina hoy</div></div>
+   <div class="hero-pill"><div class="v">${att.streak}</div><div class="l">racha actual</div></div>
+   <div class="hero-pill"><div class="v">${att.thisMonth}</div><div class="l">asistencias este mes</div></div>
+  </div>
+ </div>
+ <div class="quick-row">
+  <div class="quick-btn" data-quick="asistencia"><div class="ic">✅</div><div class="t">Asistencia</div></div>
+  <div class="quick-btn" data-quick="comida"><div class="ic">🍎</div><div class="t">Comida</div></div>
+  <div class="quick-btn" data-quick="peso"><div class="ic">⚖️</div><div class="t">Peso</div></div>
+  <div class="quick-btn" data-quick="entreno"><div class="ic">🏋️</div><div class="t">Entreno</div></div>
+ </div>
+ <div class="section-title first">Hoy</div>
+ <div class="card">
+  <div class="ring-wrap">
+   ${ringSvg(pct, color)}
+   <div style="flex:1">
+    <div class="card-row"><b style="font-size:14px">Calorias</b><span class="muted">${nut.sum.kcal} / ${targets.kcal}</span></div>
+    <div class="macrobar"><div class="row"><span>Proteina</span><span>${Math.round(nut.sum.protein)}/${targets.protein}g</span></div><div class="barbg"><div class="barfg" style="width:${clamp(nut.sum.protein/targets.protein*100,0,100)}%;background:${color}"></div></div></div>
+    <div class="macrobar"><div class="row"><span>Carbos</span><span>${Math.round(nut.sum.carbs)}/${targets.carbs}g</span></div><div class="barbg"><div class="barfg" style="width:${clamp(nut.sum.carbs/targets.carbs*100,0,100)}%;background:#fbbf24"></div></div></div>
+    <div class="macrobar"><div class="row"><span>Grasas</span><span>${Math.round(nut.sum.fat)}/${targets.fat}g</span></div><div class="barbg"><div class="barfg" style="width:${clamp(nut.sum.fat/targets.fat*100,0,100)}%;background:#f87171"></div></div></div>
+   </div>
+  </div>
+ </div>
+ <div class="section-title">Progreso</div>
+ <div class="stat-grid">
+  <div class="stat-box"><div class="v">${att.pct}%</div><div class="l">Asistencia general</div></div>
+  <div class="stat-box"><div class="v">${att.best}</div><div class="l">Mejor racha</div></div>
+ </div>
+ <div style="height:10px"></div>
+ <div class="card card-row" data-quick="fotos" style="cursor:pointer">
+  <div style="display:flex;align-items:center;gap:12px">
+   ${lastPhoto? `<img src="${lastPhoto.img}" style="width:52px;height:52px;border-radius:12px;object-fit:cover">` : `<div class="li-ic">📷</div>`}
+   <div><div class="li-name">Foto de progreso</div><div class="li-sub">${lastPhoto? fmtDate(lastPhoto.date)+' · '+lastPhoto.label : 'Aun no has subido fotos'}</div></div>
+  </div><span class="faint">›</span>
+ </div>
+ ${activeGoal? `<div class="card">
+   <div class="card-row"><b style="font-size:14px">${GOAL_TYPES.find(g=>g.k===activeGoal.type)?.ic||'🎯'} Proxima meta</b><span class="faint">${goalProgressLabel(activeGoal)}</span></div>
+   <div class="muted" style="margin-top:4px">${goalTitle(activeGoal)}</div>
+   <div class="goal-bar-bg"><div class="goal-bar-fg" style="width:${goalPct(activeGoal)}%;background:${color}"></div></div>
+  </div>` : ''}
+ `;
+}
+function ringSvg(pct, color){
+ const p = clamp(pct,0,100); const r=40, c=2*Math.PI*r, off=c-(c*p/100);
+ return `<div class="ring"><svg width="96" height="96" viewBox="0 0 96 96">
+  <circle cx="48" cy="48" r="${r}" stroke="var(--card2)" stroke-width="10" fill="none"/>
+  <circle cx="48" cy="48" r="${r}" stroke="${color}" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/>
+ </svg><div class="center"><b>${pct}%</b><span>del dia</span></div></div>`;
+}
+function renderCoupleDashboard(){
+ const ids = profileIds(); const [a,b]=ids; const cs = coupleStats();
+ const wa = weightStats(a), wb = weightStats(b);
+ return `
+ <div class="hero" style="--hero-c1:${PROFILE_COLORS[0]};--hero-c2:${PROFILE_COLORS[1]}">
+  <div class="name">Nosotros</div>
+  <div class="weight">${cs.daysSince} dias</div>
+  <div class="delta">entrenando juntos desde el ${fmtDate(state.coupleStartDate)}</div>
+  <div class="hero-grid">
+   <div class="hero-pill"><div class="v">${cs.jointDays}</div><div class="l">entrenamientos juntos</div></div>
+   <div class="hero-pill"><div class="v">${cs.streak}</div><div class="l">racha juntos</div></div>
+   <div class="hero-pill"><div class="v">${round1(Math.abs(wa.deltaStart)+Math.abs(wb.deltaStart))} kg</div><div class="l">cambio combinado</div></div>
+   <div class="hero-pill"><div class="v">${cs.totalA+cs.totalB}</div><div class="l">asistencias totales</div></div>
+  </div>
+ </div>
+ <div class="section-title first">Comparativa</div>
+ ${[a,b].map(id=>{ const p=getProfile(id); const w=weightStats(id); const at=attendanceStats(id); const color=profileColor(id);
+  return `<div class="card">
+   <div class="card-row"><b style="color:${color}">${p.name}</b><span class="muted">${w.current} kg</span></div>
+   <div class="faint" style="margin-top:2px">${w.deltaStart<=0?'-':''}${Math.abs(w.deltaStart)} kg desde el inicio · racha ${at.streak} · ${at.pct}% asistencia</div>
+  </div>`; }).join('')}
+ <div class="section-title">Motivacion</div>
+ <div class="card empty" style="padding:18px 10px">
+  <div class="ic">🔥</div>
+  <p>${cs.streak>0? `Llevan ${cs.streak} dias seguidos entrenando juntos. ¡Sigan asi!` : 'Registren asistencia el mismo dia para empezar su racha en pareja.'}</p>
+ </div>`;
+}
+function goalTitle(g){
+ const t = GOAL_TYPES.find(x=>x.k===g.type);
+ if(g.type==="peso") return `Bajar/subir ${Math.abs(g.target-g.startValue)} kg`;
+ if(g.type==="pesoobjetivo") return `Llegar a ${g.target} kg`;
+ if(g.type==="asistencia") return `Asistir ${g.target} dias`;
+ if(g.type==="racha") return `Mantener una racha de ${g.target} dias`;
+ if(g.type==="proteina") return `Consumir ${g.target} g de proteina/dia`;
+ if(g.type==="ejercicio") return `Mejorar ${g.exercise} a ${g.target} kg`;
+ return t?.l||"Meta";
+}
+function goalCurrentValue(g){
+ if(g.type==="peso"||g.type==="pesoobjetivo"){ return weightStats(g.profileId).current; }
+ if(g.type==="asistencia"){ return state.attendance.filter(a=>a.profileId===g.profileId && a.date>=g.createdDate).length; }
+ if(g.type==="racha"){ return attendanceStats(g.profileId).streak; }
+ if(g.type==="proteina"){ return Math.round(nutritionToday(g.profileId).sum.protein); }
+ if(g.type==="ejercicio"){ const h=exerciseHistory(g.profileId, g.exercise); return h.length? h[h.length-1].weight : g.startValue; }
+ return 0;
+}
+function goalPct(g){
+ const cur = goalCurrentValue(g);
+ if(g.type==="peso"||g.type==="pesoobjetivo"||g.type==="ejercicio"){
+  const span = Math.abs(g.target-g.startValue)||1; const done = g.target>=g.startValue? (cur-g.startValue) : (g.startValue-cur);
+  return clamp(Math.round(done/span*100),0,100);
+ }
+ return clamp(Math.round(cur/g.target*100),0,100);
+}
+function goalProgressLabel(g){
+ if(g.type==="peso"||g.type==="pesoobjetivo"||g.type==="ejercicio") return `${goalCurrentValue(g)} / ${g.target}`;
+ return `${goalCurrentValue(g)} / ${g.target}`;
+}
+
+/* ============================= NUTRICION ============================= */
+let nutHistoryDate = null;
+function renderNutricion(){
+ const pid = scopedProfileId(); const profile = getProfile(pid);
+ const date = nutHistoryDate || todayStr();
+ const nut = nutritionToday(pid, date);
+ const targets = calcMacroTargets(profile);
+ const pct = clamp(Math.round((nut.sum.kcal/targets.kcal)*100),0,999);
+ const isToday = date===todayStr();
+ return `<div class="topbar"><h1>Nutricion</h1><div class="sub">TMD estimado y registro diario</div>${scopeSwitcherIfCouple()}</div>
+ <div class="content">
+  <div class="card">
+   <div class="cal-head" style="margin-bottom:8px">
+    <button data-daynav="-1">‹</button>
+    <b>${isToday? "Hoy" : fmtDateLong(date)}</b>
+    <button data-daynav="1" ${isToday?'disabled style="opacity:.3"':''}>›</button>
+   </div>
+   <div class="ring-wrap">
+    ${ringSvg(pct, profileColor(pid))}
+    <div style="flex:1">
+     <div class="card-row"><b style="font-size:14px">${nut.sum.kcal} kcal</b><span class="muted">de ${targets.kcal}</span></div>
+     <div class="faint">${nut.sum.kcal<=targets.kcal? `${targets.kcal-nut.sum.kcal} kcal restantes` : `${nut.sum.kcal-targets.kcal} kcal por encima`}</div>
+     <div class="macrobar"><div class="row"><span>Proteina</span><span>${Math.round(nut.sum.protein)}/${targets.protein}g</span></div><div class="barbg"><div class="barfg" style="width:${clamp(nut.sum.protein/targets.protein*100,0,100)}%;background:${profileColor(pid)}"></div></div></div>
+    </div>
+   </div>
+  </div>
+  ${MEAL_TYPES.map(mt=>renderMealSection(mt, nut.entries.filter(e=>e.meal===mt.k), isToday)).join('')}
+  <button class="btn secondary" data-histbtn style="margin-top:6px">📅 Ver historial de alimentacion</button>
+ </div>`;
+}
+function scopeSwitcherIfCouple(){ return state.mode==="pareja"? `<div class="switcher" style="margin-top:12px">
+  <button class="${state.ui.scope==='me'?'active':''}" data-tone="a" data-scope="me">${getActiveProfile().name}</button>
+  <button class="${state.ui.scope==='partner'?'active':''}" data-tone="b" data-scope="partner">${getProfile(getPartnerId()).name}</button>
+ </div>` : ''; }
+function renderMealSection(mt, entries, editable){
+ const total = entries.reduce((a,e)=>a+e.kcal,0);
+ return `<div class="section-title">${mt.ic} ${mt.l} <span class="faint" style="font-weight:600">${entries.length? '· '+total+' kcal':''}</span></div>
+ <div class="card">
+  ${entries.length? entries.map(e=>`<div class="list-item">
+    <div class="li-l"><div class="li-ic">${mt.ic}</div><div><div class="li-name">${e.food}</div><div class="li-sub">${e.qty} ${e.unitLabel} · ${e.kcal} kcal</div></div></div>
+    <div style="display:flex;align-items:center;gap:6px"><div class="li-r">P${Math.round(e.protein)} C${Math.round(e.carbs)} G${Math.round(e.fat)}</div>${editable?`<button class="li-del" data-delfood="${e.id}">✕</button>`:''}</div>
+   </div>`).join('') : `<div class="empty" style="padding:12px 0"><p>Sin registros</p></div>`}
+  ${editable? `<button class="btn small ghost" style="width:100%;margin-top:8px" data-addfood="${mt.k}">+ Agregar ${mt.l.toLowerCase()}</button>` : ''}
+ </div>`;
+}
+
+/* ============================= ENTRENO ============================= */
+function renderEntreno(){
+ const pid = scopedProfileId();
+ return `<div class="topbar"><h1>Entreno</h1><div class="sub">Asistencia y ejercicios</div>${scopeSwitcherIfCouple()}
+  <div class="seg" style="margin-top:12px">
+   <button class="${state.ui.trainSub==='asistencia'?'active':''}" data-sub="asistencia">Asistencia</button>
+   <button class="${state.ui.trainSub==='ejercicios'?'active':''}" data-sub="ejercicios">Ejercicios</button>
+  </div>
+ </div>
+ <div class="content">${state.ui.trainSub==='asistencia'? renderAsistencia(pid) : renderEjercicios(pid)}</div>`;
+}
+function renderAsistencia(pid){
+ const att = attendanceStats(pid); const wentToday = att.dates.includes(todayStr());
+ const y=state.ui.calYear, m=state.ui.calMonth;
+ return `
+ <button class="btn" data-quick="asistencia" style="background:${wentToday?'var(--success)':profileColor(pid)}">${wentToday? '✅ Ya registraste hoy':'Hoy fui al gimnasio'}</button>
+ <div class="section-title">Calendario</div>
+ <div class="card">
+  <div class="cal-head"><button data-calnav="-1">‹</button><b>${new Date(y,m,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'})}</b><button data-calnav="1">›</button></div>
+  ${renderCalendarGrid(pid,y,m)}
+ </div>
+ <div class="section-title">Estadisticas</div>
+ <div class="stat-grid">
+  <div class="stat-box"><div class="v">${att.total}</div><div class="l">Total asistencias</div></div>
+  <div class="stat-box"><div class="v">${att.streak}</div><div class="l">Racha actual</div></div>
+  <div class="stat-box"><div class="v">${att.best}</div><div class="l">Mejor racha</div></div>
+  <div class="stat-box"><div class="v">${att.pct}%</div><div class="l">% de asistencia</div></div>
+ </div>
+ <div class="card" style="margin-top:12px"><p class="muted">Has asistido <b style="color:var(--text)">${att.last24count} de los ultimos 24 dias</b>.</p></div>
+ `;
+}
+function renderCalendarGrid(pid,y,m){
+ const first = new Date(y,m,1); const startDow = first.getDay();
+ const daysInMonth = new Date(y,m+1,0).getDate();
+ const set = new Set(state.attendance.filter(a=>a.profileId===pid).map(a=>a.date));
+ const dow=["D","L","M","X","J","V","S"];
+ let cells = dow.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+ for(let i=0;i<startDow;i++) cells += `<div class="cal-day empty"></div>`;
+ for(let d=1; d<=daysInMonth; d++){
+  const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const isFuture = ds > todayStr();
+  const went = set.has(ds);
+  cells += `<div class="cal-day ${went?'went':''} ${ds===todayStr()?'today':''} ${isFuture?'future':''}" ${!isFuture?`data-toggleday="${ds}" data-pid="${pid}"`:''}>${d}</div>`;
+ }
+ return `<div class="cal-grid">${cells}</div>`;
+}
+function renderEjercicios(pid){
+ const list = state.workouts.filter(w=>w.profileId===pid).sort((a,b)=>b.date.localeCompare(a.date));
+ const exNames = [...new Set(list.map(w=>w.exercise))];
+ return `
+ <button class="btn" data-quick="entreno" style="background:${profileColor(pid)}">+ Registrar ejercicio</button>
+ ${exNames.length? `<div class="section-title">Progresion</div>` : ''}
+ ${exNames.map(name=>{
+  const h = exerciseHistory(pid,name);
+  const first=h[0], last=h[h.length-1];
+  const diff = round1(last.weight-first.weight);
+  return `<div class="card">
+   <div class="card-row"><b style="font-size:14px">${name}</b><span class="muted">${last.weight} kg</span></div>
+   ${h.length>1? `<div class="faint" style="margin:4px 0 8px">${diff>0?'+':''}${diff} kg desde el primer registro</div>${lineChartSvg(h.map(x=>x.weight), profileColor(pid))}` : `<div class="faint" style="margin-top:4px">Un solo registro aun</div>`}
+  </div>`;
+ }).join('')}
+ <div class="section-title">Historial</div>
+ <div class="card">
+  ${list.length? list.map(w=>`<div class="list-item">
+    <div class="li-l"><div class="li-ic">🏋️</div><div><div class="li-name">${w.exercise}</div><div class="li-sub">${w.muscleGroup} · ${fmtDate(w.date)}</div></div></div>
+    <div style="display:flex;align-items:center;gap:6px"><div class="li-r">${w.sets}x${w.reps} · ${w.weight}kg</div><button class="li-del" data-delworkout="${w.id}">✕</button></div>
+   </div>`).join('') : `<div class="empty"><div class="ic">🏋️</div><p>Aun no hay entrenamientos registrados</p></div>`}
+ </div>`;
+}
+function lineChartSvg(values, color){
+ if(values.length<2) return '';
+ const w=280,h=64,pad=6; const min=Math.min(...values),max=Math.max(...values);
+ const range = (max-min)||1;
+ const pts = values.map((v,i)=>{ const x=pad+(i/(values.length-1))*(w-pad*2); const y=h-pad-((v-min)/range)*(h-pad*2); return `${x},${y}`; }).join(' ');
+ return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:64px" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+/* ============================= PROGRESO ============================= */
+function renderProgreso(){
+ const pid = scopedProfileId();
+ return `<div class="topbar"><h1>Progreso</h1><div class="sub">Peso, fotos y metas</div>${scopeSwitcherIfCouple()}
+  <div class="seg" style="margin-top:12px">
+   <button class="${state.ui.progSub==='peso'?'active':''}" data-sub2="peso">Peso</button>
+   <button class="${state.ui.progSub==='fotos'?'active':''}" data-sub2="fotos">Fotos</button>
+   <button class="${state.ui.progSub==='metas'?'active':''}" data-sub2="metas">Metas</button>
+  </div>
+ </div>
+ <div class="content">${state.ui.progSub==='peso'?renderPeso(pid):state.ui.progSub==='fotos'?renderFotos(pid):renderMetas(pid)}</div>`;
+}
+function renderPeso(pid){
+ const ws = weightStats(pid); const profile=getProfile(pid);
+ const weeks = Math.floor(Math.max(daysBetween(profile.startDate,todayStr()),0)/7);
+ return `
+ <button class="btn" data-quick="peso" style="background:${profileColor(pid)}">+ Registrar peso de hoy</button>
+ <div class="section-title">Evolucion</div>
+ <div class="card">
+  <div class="card-row"><b style="font-size:22px">${ws.current} kg</b><span class="muted">meta: ${profile.goalWeight||'—'} kg</span></div>
+  ${ws.list.length>1? lineChartSvg(ws.list.map(w=>w.weight), profileColor(pid)) : `<div class="faint" style="margin-top:8px">Registra mas pesos para ver tu grafica</div>`}
+ </div>
+ <div class="card empty" style="padding:16px 10px;text-align:left">
+  <p style="color:var(--text)">${ws.deltaStart<0?`Has perdido ${Math.abs(ws.deltaStart)} kg desde que comenzaste.`: ws.deltaStart>0? `Has subido ${ws.deltaStart} kg desde que comenzaste.`:'Aun sin cambios desde el inicio.'}</p>
+  <p class="muted" style="margin-top:4px">Llevas ${weeks} semana${weeks===1?'':'s'} registrando tu progreso.</p>
+ </div>
+ <div class="section-title">Historial</div>
+ <div class="card">
+  ${ws.list.length? ws.list.slice().reverse().map((w,i,arr)=>{ const prev=arr[i+1]; const d = prev? round1(w.weight-prev.weight):0;
+    return `<div class="list-item"><div class="li-l"><div class="li-ic">⚖️</div><div><div class="li-name">${w.weight} kg</div><div class="li-sub">${fmtDate(w.date)} ${prev?`· ${d>0?'+':''}${d} kg vs anterior`:''}</div></div></div><button class="li-del" data-delweight="${w.id}">✕</button></div>`;
+   }).join('') : `<div class="empty"><p>Sin registros de peso</p></div>`}
+ </div>`;
+}
+function renderFotos(pid){
+ const photos = state.photos.filter(p=>p.profileId===pid).sort((a,b)=>a.date.localeCompare(b.date));
+ return `
+ <button class="btn" data-quick="fotoadd" style="background:${profileColor(pid)}">+ Subir foto de progreso</button>
+ ${photos.length>=2? `<div class="section-title">Comparar antes / despues</div>
+  <div class="card">
+   <div class="field-row">
+    <div class="field"><label>Antes</label><select id="cmpBefore">${photos.map((p,i)=>`<option value="${i}" ${i===0?'selected':''}>${p.label} · ${fmtDate(p.date)}</option>`).join('')}</select></div>
+    <div class="field"><label>Despues</label><select id="cmpAfter">${photos.map((p,i)=>`<option value="${i}" ${i===photos.length-1?'selected':''}>${p.label} · ${fmtDate(p.date)}</option>`).join('')}</select></div>
+   </div>
+   <div class="compare-wrap" id="compareBox">
+    <img class="before" id="cmpImgBefore" src="${photos[0].img}">
+    <img class="after" id="cmpImgAfter" src="${photos[photos.length-1].img}">
+    <div class="compare-line" id="cmpLine"></div>
+    <input type="range" min="0" max="100" value="50" class="compare-slider" id="cmpSlider">
+   </div>
+  </div>` : ''}
+ <div class="section-title">Cronologia</div>
+ ${photos.length? `<div class="photo-grid">${photos.map(p=>`<div class="photo-cell" data-photoview="${p.id}"><img src="${p.img}"><div class="tag">${p.label}</div></div>`).join('')}</div>`
+  : `<div class="card empty"><div class="ic">📷</div><p>Aun no has subido fotos de progreso</p></div>`}
+ `;
+}
+function renderMetas(pid){
+ const mine = state.goals.filter(g=>g.profileId===pid);
+ const active = mine.filter(g=>!g.achieved);
+ const done = mine.filter(g=>g.achieved);
+ return `
+ <button class="btn" data-quick="meta" style="background:${profileColor(pid)}">+ Nueva meta</button>
+ <div class="section-title">Activas</div>
+ ${active.length? active.map(g=>`<div class="card">
+   <div class="card-row"><b style="font-size:14px">${GOAL_TYPES.find(x=>x.k===g.type)?.ic} ${goalTitle(g)}</b><button class="li-del" data-delgoal="${g.id}">✕</button></div>
+   <div class="goal-bar-bg"><div class="goal-bar-fg" style="width:${goalPct(g)}%;background:${profileColor(pid)}"></div></div>
+   <div class="faint" style="margin-top:5px">${goalProgressLabel(g)} · ${goalPct(g)}%</div>
+  </div>`).join('') : `<div class="card empty"><p>No tienes metas activas</p></div>`}
+ ${done.length? `<div class="section-title">Cumplidas</div>${done.map(g=>`<div class="card card-row"><span>${goalTitle(g)}</span><span class="achieved-badge">✓ Lograda</span></div>`).join('')}` : ''}
+ `;
+}
+
+/* ============================= PERFIL ============================= */
+function renderPerfil(){
+ const pid = state.activeProfileId; const profile=getProfile(pid);
+ return `<div class="topbar"><h1>Perfil</h1><div class="sub">Datos, historial y ajustes</div></div>
+ <div class="content">
+  <div class="card">
+   <div class="card-row"><b style="font-size:16px">${profile.name}</b><button class="btn small ghost" data-editprofile="${pid}">Editar</button></div>
+   <div class="faint" style="margin-top:6px">${profile.age} anos · ${profile.sex==='M'?'Hombre':'Mujer'} · ${profile.height} cm</div>
+   <div class="faint">Objetivo: ${GOALS_OBJ.find(o=>o.k===profile.objective)?.l} · ${ACTIVITY_LEVELS.find(a=>a.k===profile.activityLevel)?.l}</div>
+   <div class="faint">Inicio: ${fmtDate(profile.startDate)} · TMD: ${Math.round(calcTDEE(profile))} kcal</div>
+  </div>
+  ${state.mode==="pareja"? `<div class="card card-row" data-switchprofile>
+    <span>Cambiar a perfil de ${getProfile(getPartnerId()).name}</span><span class="faint">⇄</span>
+   </div>` : `<div class="card card-row" data-addpartner><span>Agregar a mi pareja</span><span class="faint">+</span></div>`}
+  <div class="section-title">Historial completo</div>
+  <div class="card">
+   <div class="list-item" data-openhist="peso"><div class="li-l"><div class="li-ic">⚖️</div><span class="li-name">Peso</span></div><span class="faint">›</span></div>
+   <div class="list-item" data-openhist="comida"><div class="li-l"><div class="li-ic">🍽️</div><span class="li-name">Alimentacion</span></div><span class="faint">›</span></div>
+   <div class="list-item" data-openhist="asistencia"><div class="li-l"><div class="li-ic">📅</div><span class="li-name">Asistencias</span></div><span class="faint">›</span></div>
+   <div class="list-item" data-openhist="entreno"><div class="li-l"><div class="li-ic">🏋️</div><span class="li-name">Entrenamientos</span></div><span class="faint">›</span></div>
+   <div class="list-item" data-openhist="fotos"><div class="li-l"><div class="li-ic">📷</div><span class="li-name">Fotografias</span></div><span class="faint">›</span></div>
+   <div class="list-item" data-openhist="metas"><div class="li-l"><div class="li-ic">🎯</div><span class="li-name">Metas alcanzadas</span></div><span class="faint">›</span></div>
+  </div>
+  <div class="section-title">Datos</div>
+  <div class="card">
+   <button class="btn secondary small" data-exportdata style="width:100%;margin-bottom:8px">⬇️ Exportar copia de seguridad</button>
+   <button class="btn secondary small" data-importdata style="width:100%">⬆️ Importar copia de seguridad</button>
+  </div>
+  <div class="faint" style="text-align:center;margin-top:14px">Nosotros Fit · datos guardados solo en este dispositivo</div>
+ </div>`;
+}
+
+/* ============================= MODAL SYSTEM ============================= */
+function openModal(html){
+ closeModal();
+ const bg=document.createElement("div"); bg.className="modal-bg"; bg.id="modalBg";
+ bg.innerHTML = `<div class="modal">${html}</div>`;
+ bg.addEventListener("click",(e)=>{ if(e.target.id==="modalBg") closeModal(); });
+ document.body.appendChild(bg);
+ bindModalActions();
+}
+function closeModal(){ const m=document.getElementById("modalBg"); if(m) m.remove(); }
+
+function openQuick(type){
+ const pid = state.ui.scope==="partner"? getPartnerId() : state.activeProfileId;
+ if(type==="asistencia"){ toggleAttendance(pid, todayStr()); return; }
+ if(type==="comida"){ openAddFoodModal(pid,"desayuno"); return; }
+ if(type==="peso"){ openLogWeightModal(pid); return; }
+ if(type==="entreno"){ openAddWorkoutModal(pid); return; }
+ if(type==="fotos"){ state.ui.tab="progreso"; state.ui.progSub="fotos"; render(); return; }
+ if(type==="fotoadd"){ openAddPhotoModal(pid); return; }
+ if(type==="meta"){ openAddGoalModal(pid); return; }
+}
+function toggleAttendance(pid, date){
+ const exists = state.attendance.find(a=>a.profileId===pid && a.date===date);
+ if(exists){ state.attendance = state.attendance.filter(a=>a!==exists); toast("Asistencia eliminada"); }
+ else { state.attendance.push({id:uid(), profileId:pid, date}); toast(date===todayStr()? "¡Asistencia registrada! 💪" : "Asistencia agregada"); }
+ saveState(); render();
+}
+
+function openAddFoodModal(pid, meal){
+ openModal(`
+  <div class="modal-head"><h3>Agregar alimento</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div class="field"><label>Comida</label><select id="mFoodMeal">${MEAL_TYPES.map(m=>`<option value="${m.k}" ${m.k===meal?'selected':''}>${m.ic} ${m.l}</option>`).join('')}</select></div>
+  <div class="field"><label>Buscar alimento</label><input id="mFoodSearch" placeholder="Ej. pollo, arroz, manzana..." autocomplete="off"></div>
+  <div class="chiprow" id="mFoodCats" style="margin-bottom:10px">${FOOD_CATS.map(c=>`<span class="chip" data-cat="${c}">${c}</span>`).join('')}</div>
+  <div id="mFoodResults" style="max-height:220px;overflow-y:auto;margin-bottom:10px"></div>
+  <div id="mFoodDetail"></div>
+ `);
+ renderFoodResults("", null);
+ document.getElementById("mFoodSearch").addEventListener("input", e=> renderFoodResults(e.target.value, currentFoodCat));
+}
+let currentFoodCat=null, selectedFood=null;
+function renderFoodResults(q, cat){
+ currentFoodCat = cat;
+ const el = document.getElementById("mFoodResults"); if(!el) return;
+ const ql = q.toLowerCase();
+ const results = FOOD_DB.filter(f=> (!cat||f.c===cat) && f.n.toLowerCase().includes(ql)).slice(0,30);
+ el.innerHTML = results.map(f=>`<div class="list-item" data-pickfood="${f.n}" style="cursor:pointer">
+   <div class="li-l"><div class="li-ic">🍴</div><div><div class="li-name">${f.n}</div><div class="li-sub">${f.k} kcal / 100${f.unit?'g · o '+f.g+'g por '+f.unit:'g'}</div></div></div><span class="faint">+</span>
+  </div>`).join('') || `<div class="faint" style="padding:8px 0">Sin resultados</div>`;
+ el.querySelectorAll("[data-pickfood]").forEach(r=>r.addEventListener("click",()=>pickFood(r.dataset.pickfood)));
+ app.querySelectorAll("#mFoodCats .chip").forEach(c=>{
+  c.classList.toggle("active", c.dataset.cat===cat);
+  c.onclick = ()=>renderFoodResults(document.getElementById("mFoodSearch").value, cat===c.dataset.cat? null : c.dataset.cat);
+ });
+}
+function pickFood(name){
+ selectedFood = FOOD_DB.find(f=>f.n===name);
+ const unitLabel = selectedFood.unit || "g";
+ const defaultQty = selectedFood.unit? 1 : 100;
+ document.getElementById("mFoodDetail").innerHTML = `
+  <div class="card">
+   <b>${selectedFood.n}</b>
+   <div class="field-row" style="margin-top:10px">
+    <div class="field"><label>Cantidad</label><input id="mFoodQty" type="number" step="any" value="${defaultQty}"></div>
+    <div class="field"><label>Unidad</label><input value="${unitLabel}" disabled></div>
+   </div>
+   <div class="faint" id="mFoodCalc"></div>
+   <button class="btn" id="mFoodConfirm" style="margin-top:8px">Agregar</button>
+  </div>`;
+ const recalc = ()=>{
+  const qty = +document.getElementById("mFoodQty").value || 0;
+  const grams = selectedFood.unit? qty*selectedFood.g : qty;
+  const factor = grams/100;
+  const kcal=Math.round(selectedFood.k*factor), pr=selectedFood.p*factor, cb=selectedFood.cb*factor, ft=selectedFood.f*factor;
+  document.getElementById("mFoodCalc").textContent = `${kcal} kcal · P${round1(pr)}g C${round1(cb)}g G${round1(ft)}g`;
+ };
+ recalc();
+ document.getElementById("mFoodQty").addEventListener("input", recalc);
+ document.getElementById("mFoodConfirm").addEventListener("click", ()=>{
+  const pid = state.ui.scope==="partner"? getPartnerId() : state.activeProfileId;
+  const meal = document.getElementById("mFoodMeal").value;
+  const qty = +document.getElementById("mFoodQty").value || 0;
+  const grams = selectedFood.unit? qty*selectedFood.g : qty;
+  const factor = grams/100;
+  state.foodLog.push({id:uid(), profileId:pid, date:todayStr(), meal, food:selectedFood.n, qty, unitLabel,
+   kcal:Math.round(selectedFood.k*factor), protein:selectedFood.p*factor, carbs:selectedFood.cb*factor, fat:selectedFood.f*factor});
+  saveState(); closeModal(); toast("Alimento agregado"); render();
+ });
+}
+function openLogWeightModal(pid){
+ const ws = weightStats(pid);
+ openModal(`
+  <div class="modal-head"><h3>Registrar peso</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div class="field"><label>Peso (kg)</label><input id="mWeight" type="number" step="0.1" value="${ws.current}"></div>
+  <div class="field"><label>Fecha</label><input id="mWeightDate" type="date" value="${todayStr()}" max="${todayStr()}"></div>
+  <button class="btn" id="mWeightSave">Guardar</button>`);
+ document.getElementById("mWeightSave").addEventListener("click", ()=>{
+  const val = +document.getElementById("mWeight").value; const date=document.getElementById("mWeightDate").value||todayStr();
+  if(!val){ toast("Ingresa un peso valido"); return; }
+  state.weights.push({id:uid(), profileId:pid, date, weight:val});
+  state.profiles[pid].currentWeight = val;
+  saveState(); closeModal(); toast("Peso registrado"); checkGoalCelebration(pid); render();
+ });
+}
+function openAddWorkoutModal(pid){
+ openModal(`
+  <div class="modal-head"><h3>Registrar ejercicio</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div class="field"><label>Grupo muscular</label><select id="mGroup">${MUSCLE_GROUPS.map(g=>`<option>${g}</option>`).join('')}</select></div>
+  <div class="field"><label>Ejercicio</label><select id="mExercise"></select></div>
+  <div class="field-row">
+   <div class="field"><label>Series</label><input id="mSets" type="number" value="3"></div>
+   <div class="field"><label>Repeticiones</label><input id="mReps" type="number" value="10"></div>
+  </div>
+  <div class="field"><label>Peso usado (kg)</label><input id="mWUsed" type="number" step="0.5" value="0"></div>
+  <div class="field"><label>Fecha</label><input id="mWDate" type="date" value="${todayStr()}" max="${todayStr()}"></div>
+  <button class="btn" id="mWorkoutSave">Guardar</button>`);
+ const groupSel=document.getElementById("mGroup"), exSel=document.getElementById("mExercise");
+ const fillEx=()=>{ exSel.innerHTML = EXERCISES_BY_GROUP[groupSel.value].map(e=>`<option>${e}</option>`).join(''); };
+ fillEx(); groupSel.addEventListener("change", fillEx);
+ document.getElementById("mWorkoutSave").addEventListener("click", ()=>{
+  state.workouts.push({id:uid(), profileId:pid, date:document.getElementById("mWDate").value||todayStr(),
+   muscleGroup:groupSel.value, exercise:exSel.value, sets:+document.getElementById("mSets").value||0,
+   reps:+document.getElementById("mReps").value||0, weight:+document.getElementById("mWUsed").value||0});
+  saveState(); closeModal(); toast("Entrenamiento registrado"); render();
+ });
+}
+function resizeImage(file, cb){
+ const reader = new FileReader();
+ reader.onload = (ev)=>{
+  const img = new Image();
+  img.onload = ()=>{
+   const maxW=900; const scale=Math.min(1,maxW/img.width);
+   const canvas=document.createElement("canvas"); canvas.width=img.width*scale; canvas.height=img.height*scale;
+   canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+   cb(canvas.toDataURL("image/jpeg",0.72));
+  };
+  img.src = ev.target.result;
+ };
+ reader.readAsDataURL(file);
+}
+function openAddPhotoModal(pid){
+ openModal(`
+  <div class="modal-head"><h3>Subir foto de progreso</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div class="field"><label>Foto</label><input id="mPhotoFile" type="file" accept="image/*" capture="environment"></div>
+  <div id="mPhotoPreview"></div>
+  <div class="field"><label>Etiqueta</label><select id="mPhotoLabel">${PHOTO_LABELS.map(l=>`<option>${l}</option>`).join('')}</select></div>
+  <div class="field"><label>Fecha</label><input id="mPhotoDate" type="date" value="${todayStr()}" max="${todayStr()}"></div>
+  <div class="field"><label>Nota (opcional)</label><textarea id="mPhotoNote" placeholder="Como te sientes, medidas, etc."></textarea></div>
+  <button class="btn" id="mPhotoSave" disabled>Guardar</button>`);
+ let dataUrl=null;
+ document.getElementById("mPhotoFile").addEventListener("change",(e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  resizeImage(f,(url)=>{ dataUrl=url; document.getElementById("mPhotoPreview").innerHTML = `<img src="${url}" style="width:100%;border-radius:14px;margin-bottom:10px">`; document.getElementById("mPhotoSave").disabled=false; });
+ });
+ document.getElementById("mPhotoSave").addEventListener("click", ()=>{
+  if(!dataUrl){ toast("Selecciona una foto"); return; }
+  state.photos.push({id:uid(), profileId:pid, date:document.getElementById("mPhotoDate").value||todayStr(),
+   label:document.getElementById("mPhotoLabel").value, note:document.getElementById("mPhotoNote").value, img:dataUrl});
+  saveState(); closeModal(); toast("Foto guardada"); render();
+ });
+}
+const GOAL_TARGET_LABEL = {pesoobjetivo:"Peso objetivo (kg)", asistencia:"Dias a asistir", racha:"Dias de racha seguidos", proteina:"Gramos de proteina al dia", ejercicio:"Peso objetivo en el ejercicio (kg)"};
+function openAddGoalModal(pid){
+ openModal(`
+  <div class="modal-head"><h3>Nueva meta</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div class="field"><label>Tipo de meta</label><select id="mGoalType">${GOAL_TYPES.map(g=>`<option value="${g.k}">${g.ic} ${g.l}</option>`).join('')}</select></div>
+  <div id="mGoalExtra"></div>
+  <button class="btn" id="mGoalSave">Crear meta</button>`);
+ const typeSel = document.getElementById("mGoalType");
+ const extra = document.getElementById("mGoalExtra");
+ const objective = getProfile(pid).objective;
+ const updateExtra=()=>{
+  const t = typeSel.value;
+  let html = "";
+  if(t==="ejercicio"){
+   html += `<div class="field"><label>Ejercicio</label><select id="mGoalExercise">${Object.values(EXERCISES_BY_GROUP).flat().map(e=>`<option>${e}</option>`).join('')}</select></div>`;
+  }
+  if(t==="peso"){
+   html += `<div class="field"><label>Direccion</label><div class="seg"><button type="button" data-dir="bajar" class="active">Bajar</button><button type="button" data-dir="subir">Subir</button></div></div>
+    <div class="field"><label>Cuantos kg</label><input id="mGoalTarget" type="number" step="0.1" min="0"></div>`;
+  } else {
+   html += `<div class="field"><label>${GOAL_TARGET_LABEL[t]}</label><input id="mGoalTarget" type="number" step="0.1"></div>`;
+  }
+  extra.innerHTML = html;
+  const dirBtns = extra.querySelectorAll("[data-dir]");
+  if(dirBtns.length){
+   if(objective==="ganar") dirBtns[1].classList.add("active"), dirBtns[0].classList.remove("active");
+   dirBtns.forEach(b=>b.addEventListener("click",()=>{ dirBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active"); }));
+  }
+ };
+ updateExtra(); typeSel.addEventListener("change", updateExtra);
+ document.getElementById("mGoalSave").addEventListener("click", ()=>{
+  const type=typeSel.value; const rawTarget=+document.getElementById("mGoalTarget").value;
+  if(!rawTarget && rawTarget!==0){ toast("Ingresa un valor"); return; }
+  let startValue=0, exercise=null, target=rawTarget;
+  if(type==="peso"||type==="pesoobjetivo") startValue = weightStats(pid).current;
+  if(type==="peso"){
+   const dir = extra.querySelector('[data-dir].active')?.dataset.dir || "bajar";
+   target = dir==="bajar"? round1(startValue-rawTarget) : round1(startValue+rawTarget);
+  }
+  if(type==="ejercicio"){ exercise=document.getElementById("mGoalExercise").value; const h=exerciseHistory(pid,exercise); startValue = h.length? h[h.length-1].weight : 0; }
+  state.goals.push({id:uid(), profileId:pid, type, target, exercise, startValue, achieved:false, createdDate:todayStr()});
+  saveState(); closeModal(); toast("Meta creada"); render();
+ });
+}
+function openEditProfileModal(pid){
+ const p = getProfile(pid);
+ openModal(`
+  <div class="modal-head"><h3>Editar perfil</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div class="field"><label>Nombre</label><input id="eName" value="${p.name}"></div>
+  <div class="field-row"><div class="field"><label>Edad</label><input id="eAge" type="number" value="${p.age}"></div><div class="field"><label>Sexo</label><select id="eSex"><option value="M" ${p.sex==='M'?'selected':''}>Hombre</option><option value="F" ${p.sex==='F'?'selected':''}>Mujer</option></select></div></div>
+  <div class="field-row"><div class="field"><label>Altura (cm)</label><input id="eHeight" type="number" value="${p.height}"></div><div class="field"><label>Meta de peso (kg)</label><input id="eGoalW" type="number" step="0.1" value="${p.goalWeight||''}"></div></div>
+  <div class="field"><label>Objetivo</label><select id="eObjective">${GOALS_OBJ.map(o=>`<option value="${o.k}" ${p.objective===o.k?'selected':''}>${o.l}</option>`).join('')}</select></div>
+  <div class="field"><label>Nivel de actividad</label><select id="eActivity">${ACTIVITY_LEVELS.map(a=>`<option value="${a.k}" ${p.activityLevel===a.k?'selected':''}>${a.l}</option>`).join('')}</select></div>
+  <button class="btn" id="eSave">Guardar cambios</button>`);
+ document.getElementById("eSave").addEventListener("click", ()=>{
+  Object.assign(state.profiles[pid], {name:document.getElementById("eName").value||p.name, age:+document.getElementById("eAge").value,
+   sex:document.getElementById("eSex").value, height:+document.getElementById("eHeight").value,
+   goalWeight:document.getElementById("eGoalW").value? +document.getElementById("eGoalW").value:null,
+   objective:document.getElementById("eObjective").value, activityLevel:document.getElementById("eActivity").value});
+  saveState(); closeModal(); toast("Perfil actualizado"); render();
+ });
+}
+function openAddPartnerModal(){
+ openModal(`
+  <div class="modal-head"><h3>Agregar a tu pareja</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <p class="muted" style="margin-bottom:12px">Desbloquea la vista "Nosotros" con estadisticas conjuntas.</p>
+  <div class="field"><label>Nombre</label><input id="pName"></div>
+  <div class="field-row"><div class="field"><label>Edad</label><input id="pAge" type="number"></div><div class="field"><label>Sexo</label><select id="pSex"><option value="M">Hombre</option><option value="F">Mujer</option></select></div></div>
+  <div class="field-row"><div class="field"><label>Altura (cm)</label><input id="pHeight" type="number"></div><div class="field"><label>Peso actual (kg)</label><input id="pWeight" type="number" step="0.1"></div></div>
+  <div class="field"><label>Objetivo</label><select id="pObjective">${GOALS_OBJ.map(o=>`<option value="${o.k}">${o.l}</option>`).join('')}</select></div>
+  <div class="field"><label>Nivel de actividad</label><select id="pActivity">${ACTIVITY_LEVELS.map(a=>`<option value="${a.k}">${a.l}</option>`).join('')}</select></div>
+  <div class="field"><label>Fecha de inicio</label><input id="pStart" type="date" value="${todayStr()}"></div>
+  <button class="btn" id="pSave">Agregar pareja</button>`);
+ document.getElementById("pSave").addEventListener("click", ()=>{
+  const name=document.getElementById("pName").value.trim(); if(!name){ toast("Escribe un nombre"); return; }
+  const id=uid();
+  const weight = +document.getElementById("pWeight").value||70;
+  state.profiles[id] = {name, age:+document.getElementById("pAge").value||25, sex:document.getElementById("pSex").value,
+   height:+document.getElementById("pHeight").value||170, initialWeight:weight, currentWeight:weight, goalWeight:null,
+   objective:document.getElementById("pObjective").value, activityLevel:document.getElementById("pActivity").value,
+   startDate:document.getElementById("pStart").value||todayStr()};
+  state.weights.push({id:uid(), profileId:id, date:document.getElementById("pStart").value||todayStr(), weight});
+  state.mode="pareja"; state.coupleStartDate = todayStr();
+  saveState(); closeModal(); toast("¡Pareja agregada!"); render();
+ });
+}
+function openHistoryModal(kind, pid){
+ let html="";
+ if(kind==="peso"){ const l=state.weights.filter(w=>w.profileId===pid).sort((a,b)=>b.date.localeCompare(a.date));
+  html = l.map(w=>`<div class="list-item"><span>${fmtDate(w.date)}</span><b>${w.weight} kg</b></div>`).join('')||emptyHist(); }
+ else if(kind==="comida"){ const l=state.foodLog.filter(f=>f.profileId===pid).sort((a,b)=>b.date.localeCompare(a.date));
+  html = l.map(f=>`<div class="list-item"><div><div class="li-name">${f.food}</div><div class="li-sub">${fmtDate(f.date)} · ${MEAL_TYPES.find(m=>m.k===f.meal)?.l}</div></div><b>${f.kcal} kcal</b></div>`).join('')||emptyHist(); }
+ else if(kind==="asistencia"){ const l=state.attendance.filter(a=>a.profileId===pid).sort((a,b)=>b.date.localeCompare(a.date));
+  html = l.map(a=>`<div class="list-item"><span>${fmtDateLong(a.date)}</span><span>✅</span></div>`).join('')||emptyHist(); }
+ else if(kind==="entreno"){ const l=state.workouts.filter(w=>w.profileId===pid).sort((a,b)=>b.date.localeCompare(a.date));
+  html = l.map(w=>`<div class="list-item"><div><div class="li-name">${w.exercise}</div><div class="li-sub">${fmtDate(w.date)} · ${w.muscleGroup}</div></div><b>${w.sets}x${w.reps} ${w.weight}kg</b></div>`).join('')||emptyHist(); }
+ else if(kind==="fotos"){ const l=state.photos.filter(p=>p.profileId===pid).sort((a,b)=>b.date.localeCompare(a.date));
+  html = `<div class="photo-grid">${l.map(p=>`<div class="photo-cell"><img src="${p.img}"><div class="tag">${p.label}</div></div>`).join('')}</div>`||emptyHist(); }
+ else if(kind==="metas"){ const l=state.goals.filter(g=>g.profileId===pid && g.achieved);
+  html = l.map(g=>`<div class="list-item"><span>${goalTitle(g)}</span><span class="achieved-badge">✓</span></div>`).join('')||emptyHist(); }
+ openModal(`<div class="modal-head"><h3>Historial · ${kind}</h3><button class="modal-close" data-close-modal>✕</button></div><div>${html}</div>`);
+}
+function emptyHist(){ return `<div class="empty"><p>Sin registros todavia</p></div>`; }
+function openPhotoDetail(photoId){
+ const p = state.photos.find(x=>x.id===photoId); if(!p) return;
+ openModal(`
+  <div class="modal-head"><h3>${p.label}</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <img src="${p.img}" style="width:100%;border-radius:16px;margin-bottom:10px">
+  <div class="faint">${fmtDateLong(p.date)}</div>
+  ${p.note? `<p style="margin-top:8px;font-size:14px">${p.note}</p>` : ''}
+  <button class="btn secondary" id="mPhotoDel" style="margin-top:14px">Eliminar foto</button>`);
+ document.getElementById("mPhotoDel").addEventListener("click", ()=>{
+  state.photos = state.photos.filter(x=>x.id!==photoId); saveState(); closeModal(); toast("Foto eliminada"); render();
+ });
+}
+
+function checkGoalCelebration(pid){
+ state.goals.filter(g=>g.profileId===pid && !g.achieved).forEach(g=>{
+  if(goalPct(g)>=100){ g.achieved=true; g.achievedDate=todayStr(); toast(`🎉 ¡Meta cumplida: ${goalTitle(g)}!`); }
+ });
+ saveState();
+}
+
+/* ============================= BIND: modal + tab-specific ============================= */
+function bindModalActions(){
+ app.querySelectorAll("[data-close-modal]").forEach(b=>b.addEventListener("click", closeModal));
+}
+function bindCompareSlider(){
+ const cmpSlider = document.getElementById("cmpSlider");
+ if(!cmpSlider) return;
+ const before=document.getElementById("cmpImgBefore"), after=document.getElementById("cmpImgAfter"), line=document.getElementById("cmpLine");
+ cmpSlider.addEventListener("input", ()=>{ const v=cmpSlider.value; after.style.clipPath=`inset(0 0 0 ${v}%)`; line.style.left=v+"%"; });
+ const beforeSel=document.getElementById("cmpBefore"), afterSel=document.getElementById("cmpAfter");
+ const pid = scopedProfileId(); const photos = state.photos.filter(p=>p.profileId===pid).sort((a,b)=>a.date.localeCompare(b.date));
+ if(beforeSel) beforeSel.addEventListener("change", ()=>{ before.src = photos[+beforeSel.value].img; });
+ if(afterSel) afterSel.addEventListener("change", ()=>{ after.src = photos[+afterSel.value].img; });
+}
+function bindTabSpecific(){
+ const tab = state.ui.tab;
+ if(tab==="nutricion"){
+  app.querySelectorAll("[data-addfood]").forEach(b=>b.addEventListener("click",()=>openAddFoodModal(scopedProfileId(), b.dataset.addfood)));
+  app.querySelectorAll("[data-delfood]").forEach(b=>b.addEventListener("click",()=>{ state.foodLog=state.foodLog.filter(f=>f.id!==b.dataset.delfood); saveState(); render(); }));
+  const histbtn = app.querySelector("[data-histbtn]"); if(histbtn) histbtn.addEventListener("click",()=>openHistoryModal("comida", scopedProfileId()));
+  app.querySelectorAll("[data-daynav]").forEach(b=>b.addEventListener("click",()=>{
+   const d=new Date((nutHistoryDate||todayStr())+"T00:00:00"); d.setDate(d.getDate()+ (+b.dataset.daynav));
+   const ds=d.toISOString().slice(0,10); nutHistoryDate = ds>todayStr()? todayStr() : ds; render();
+  }));
+ }
+ if(tab==="entreno"){
+  app.querySelectorAll("[data-sub]").forEach(b=>b.addEventListener("click",()=>{ state.ui.trainSub=b.dataset.sub; render(); }));
+  app.querySelectorAll("[data-calnav]").forEach(b=>b.addEventListener("click",()=>{
+   let m=state.ui.calMonth+(+b.dataset.calnav), y=state.ui.calYear; if(m<0){m=11;y--;} if(m>11){m=0;y++;} state.ui.calMonth=m; state.ui.calYear=y; render();
+  }));
+  app.querySelectorAll("[data-toggleday]").forEach(b=>b.addEventListener("click",()=>toggleAttendance(b.dataset.pid, b.dataset.toggleday)));
+  app.querySelectorAll("[data-delworkout]").forEach(b=>b.addEventListener("click",()=>{ state.workouts=state.workouts.filter(w=>w.id!==b.dataset.delworkout); saveState(); render(); }));
+ }
+ if(tab==="progreso"){
+  app.querySelectorAll("[data-sub2]").forEach(b=>b.addEventListener("click",()=>{ state.ui.progSub=b.dataset.sub2; render(); }));
+  app.querySelectorAll("[data-delweight]").forEach(b=>b.addEventListener("click",()=>{ state.weights=state.weights.filter(w=>w.id!==b.dataset.delweight); saveState(); render(); }));
+  app.querySelectorAll("[data-delgoal]").forEach(b=>b.addEventListener("click",()=>{ state.goals=state.goals.filter(g=>g.id!==b.dataset.delgoal); saveState(); render(); }));
+  app.querySelectorAll("[data-photoview]").forEach(b=>b.addEventListener("click",()=>openPhotoDetail(b.dataset.photoview)));
+  bindCompareSlider();
+ }
+ if(tab==="perfil"){
+  app.querySelectorAll("[data-editprofile]").forEach(b=>b.addEventListener("click",()=>openEditProfileModal(b.dataset.editprofile)));
+  const sw = app.querySelector("[data-switchprofile]"); if(sw) sw.addEventListener("click",()=>{ state.activeProfileId=getPartnerId(); state.ui.scope="me"; toast("Cambiaste de perfil"); render(); });
+  const addp = app.querySelector("[data-addpartner]"); if(addp) addp.addEventListener("click", openAddPartnerModal);
+  app.querySelectorAll("[data-openhist]").forEach(b=>b.addEventListener("click",()=>openHistoryModal(b.dataset.openhist, state.activeProfileId)));
+  const exp = app.querySelector("[data-exportdata]"); if(exp) exp.addEventListener("click", exportData);
+  const imp = app.querySelector("[data-importdata]"); if(imp) imp.addEventListener("click", importData);
+ }
+}
+function exportData(){
+ const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement("a"); a.href=url; a.download=`nosotrosfit_backup_${todayStr()}.json`; a.click();
+ URL.revokeObjectURL(url);
+}
+function importData(){
+ const input = document.createElement("input"); input.type="file"; input.accept="application/json";
+ input.addEventListener("change",()=>{
+  const f=input.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{ try{ const d=JSON.parse(ev.target.result); state=d; saveState(); toast("Datos importados"); render(); }catch(e){ toast("Archivo invalido"); } };
+  reader.readAsText(f);
+ });
+ input.click();
+}
+
+render();
+})();
+</script>
+</body>
+</html>
