@@ -188,6 +188,7 @@ input,select,textarea{font-family:inherit;}
 <body>
 <div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -248,7 +249,7 @@ function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 function round1(v){ return Math.round(v*10)/10; }
 
 /* ============================= MAPPERS (DB row -> app shape) ============================= */
-function mapProfile(r){ return {id:r.id, name:r.name, age:r.age, sex:r.sex, height:r.height, initialWeight:Number(r.initial_weight), currentWeight:Number(r.current_weight), goalWeight:r.goal_weight!=null?Number(r.goal_weight):null, objective:r.objective, activityLevel:r.activity_level, startDate:r.start_date, createdAt:r.created_at}; }
+function mapProfile(r){ return {id:r.id, name:r.name, age:r.age, sex:r.sex, height:r.height, initialWeight:Number(r.initial_weight), currentWeight:Number(r.current_weight), goalWeight:r.goal_weight!=null?Number(r.goal_weight):null, objective:r.objective, activityLevel:r.activity_level, startDate:r.start_date, createdAt:r.created_at, avatarUrl:r.avatar_url||null}; }
 function mapFood(r){ return {id:r.id, n:r.name, c:r.category, unit:r.unit_label, g:r.grams_per_unit?Number(r.grams_per_unit):null, k:Number(r.kcal), p:Number(r.protein), cb:Number(r.carbs), f:Number(r.fat)}; }
 function mapWeight(r){ return {id:r.id, profileId:r.user_id, date:r.date, weight:Number(r.weight)}; }
 function mapFoodLog(r){ return {id:r.id, profileId:r.user_id, date:r.date, meal:r.meal, food:r.food_name, qty:Number(r.qty), unitLabel:r.unit_label, kcal:Number(r.kcal), protein:Number(r.protein), carbs:Number(r.carbs), fat:Number(r.fat)}; }
@@ -493,7 +494,6 @@ function scopeSwitcherIfCouple(){
 function bindGlobalActions(){
  app.querySelectorAll("[data-scope]").forEach(b=>b.addEventListener("click",()=>{ state.ui.scope=b.dataset.scope; render(); }));
  app.querySelectorAll("[data-quick]").forEach(b=>b.addEventListener("click",()=>openQuick(b.dataset.quick)));
- app.querySelectorAll("[data-close-modal]").forEach(b=>b.addEventListener("click", closeModal));
 }
 function scopedProfileId(){
  if(state.ui.scope==="partner") return getPartnerId();
@@ -527,7 +527,10 @@ function renderPersonDashboard(pid){
  const pct = clamp(Math.round((nut.sum.kcal/targets.kcal)*100),0,999);
  return `
  <div class="hero" style="--hero-c1:${color};--hero-c2:${color}cc">
-  <div class="name">${profile.name}</div>
+  <div style="display:flex;align-items:center;gap:8px">
+   ${profile.avatarUrl? `<img src="${profile.avatarUrl}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.55)">` : ''}
+   <div class="name">${profile.name}</div>
+  </div>
   <div class="weight">${ws.current} kg</div>
   <div class="delta">${deltaTxt}</div>
   <div class="hero-grid">
@@ -599,7 +602,7 @@ function renderCoupleDashboard(){
  <div class="section-title first">Comparativa</div>
  ${[a,b].map(id=>{ const p=getProfile(id); const w=weightStats(id); const at=attendanceStats(id); const color=profileColor(id);
   return `<div class="card">
-   <div class="card-row"><b style="color:${color}">${p.name}</b><span class="muted">${w.current} kg</span></div>
+   <div class="card-row"><div style="display:flex;align-items:center;gap:8px">${avatarHtml(p,26)}<b style="color:${color}">${p.name}</b></div><span class="muted">${w.current} kg</span></div>
    <div class="faint" style="margin-top:2px">${w.deltaStart<=0?'-':''}${Math.abs(w.deltaStart)} kg desde el inicio · racha ${at.streak} · ${at.pct}% asistencia</div>
   </div>`; }).join('')}
  <div class="section-title">Motivacion</div>
@@ -839,9 +842,17 @@ function renderPerfil(){
  return `<div class="topbar"><h1>Perfil</h1><div class="sub">Datos, historial y ajustes</div></div>
  <div class="content">
   <div class="card">
-   <div class="card-row"><b style="font-size:16px">${profile.name}</b><button class="btn small ghost" data-editprofile="${pid}">Editar</button></div>
-   <div class="faint" style="margin-top:6px">${profile.age} anos · ${profile.sex==='M'?'Hombre':'Mujer'} · ${profile.height} cm</div>
-   <div class="faint">Objetivo: ${GOALS_OBJ.find(o=>o.k===profile.objective)?.l} · ${ACTIVITY_LEVELS.find(a=>a.k===profile.activityLevel)?.l}</div>
+   <div style="display:flex;gap:12px;align-items:center">
+    <div data-avatarupload style="cursor:pointer;position:relative">
+     ${avatarHtml(profile, 56)}
+     <div style="position:absolute;bottom:-2px;right:-2px;width:20px;height:20px;border-radius:50%;background:var(--a);display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid var(--bg-elev)">📷</div>
+    </div>
+    <div style="flex:1;min-width:0">
+     <div class="card-row"><b style="font-size:16px">${profile.name}</b><button class="btn small ghost" data-editprofile="${pid}">Editar</button></div>
+     <div class="faint" style="margin-top:6px">${profile.age} anos · ${profile.sex==='M'?'Hombre':'Mujer'} · ${profile.height} cm</div>
+    </div>
+   </div>
+   <div class="faint" style="margin-top:10px">Objetivo: ${GOALS_OBJ.find(o=>o.k===profile.objective)?.l} · ${ACTIVITY_LEVELS.find(a=>a.k===profile.activityLevel)?.l}</div>
    <div class="faint">Inicio: ${fmtDate(profile.startDate)} · TMD: ${Math.round(calcTDEE(profile))} kcal</div>
   </div>
   ${isPareja()? `<div class="faint" style="text-align:center;margin:2px 0 4px">Pareja: ${getProfile(getPartnerId()).name}</div>` : ''}
@@ -924,7 +935,7 @@ function renderFoodResults(q, cat){
    <div class="li-l"><div class="li-ic">🍴</div><div><div class="li-name">${f.n}</div><div class="li-sub">${f.k} kcal / 100${f.unit?'g · o '+f.g+'g por '+f.unit:'g'}</div></div></div><span class="faint">+</span>
   </div>`).join('') || `<div class="faint" style="padding:8px 0">Sin resultados</div>`;
  el.querySelectorAll("[data-pickfood]").forEach(r=>r.addEventListener("click",()=>pickFood(r.dataset.pickfood)));
- app.querySelectorAll("#mFoodCats .chip").forEach(c=>{
+ document.querySelectorAll("#mFoodCats .chip").forEach(c=>{
   c.classList.toggle("active", c.dataset.cat===cat);
   c.onclick = ()=>renderFoodResults(document.getElementById("mFoodSearch").value, cat===c.dataset.cat? null : c.dataset.cat);
  });
@@ -1013,12 +1024,13 @@ function openAddWorkoutModal(pid){
   closeModal(); toast("Entrenamiento registrado"); render();
  });
 }
-function resizeImageToCanvas(file, cb){
+function resizeImageToCanvas(file, cb, maxW){
+ maxW = maxW || 900;
  const reader = new FileReader();
  reader.onload = (ev)=>{
   const img = new Image();
   img.onload = ()=>{
-   const maxW=900; const scale=Math.min(1,maxW/img.width);
+   const scale=Math.min(1,maxW/img.width);
    const canvas=document.createElement("canvas"); canvas.width=img.width*scale; canvas.height=img.height*scale;
    canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
    cb(canvas);
@@ -1026,6 +1038,32 @@ function resizeImageToCanvas(file, cb){
   img.src = ev.target.result;
  };
  reader.readAsDataURL(file);
+}
+function openAvatarUpload(){
+ const input = document.createElement("input"); input.type="file"; input.accept="image/*";
+ input.addEventListener("change",(e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  resizeImageToCanvas(f, (canvas)=>{
+   canvas.toBlob(async (blob)=>{
+    toast("Subiendo foto de perfil...");
+    const path = `${state.myId}.jpg`;
+    const { error: upErr } = await sb.storage.from("avatars").upload(path, blob, {contentType:"image/jpeg", upsert:true});
+    if(upErr){ toast("Error subiendo la foto"); return; }
+    const { data: pub } = sb.storage.from("avatars").getPublicUrl(path);
+    const url = pub.publicUrl + "?t=" + Date.now();
+    const { error } = await sb.from('profiles').update({avatar_url:url}).eq('id', state.myId);
+    if(error){ toast("Error guardando"); return; }
+    state.profiles[state.myId].avatarUrl = url;
+    toast("Foto de perfil actualizada"); render();
+   }, "image/jpeg", 0.85);
+  }, 400);
+ });
+ input.click();
+}
+function avatarHtml(profile, size){
+ return profile.avatarUrl
+  ? `<img src="${profile.avatarUrl}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex:none">`
+  : `<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${Math.round(size*0.4)}px;flex:none">${(profile.name||'?')[0].toUpperCase()}</div>`;
 }
 function openAddPhotoModal(pid){
  openModal(`
@@ -1177,6 +1215,11 @@ function renderAdminFoodsList(q){
  openModal(`
   <div class="modal-head"><h3>Base de alimentos</h3><button class="modal-close" data-close-modal>✕</button></div>
   <button class="btn small" id="adminAddFood" style="width:100%;margin-bottom:10px">+ Agregar alimento</button>
+  <div class="field-row" style="margin-bottom:10px">
+   <button class="btn small secondary" id="adminDownloadTemplate" style="flex:1">⬇️ Plantilla Excel</button>
+   <button class="btn small secondary" id="adminBulkUploadBtn" style="flex:1">⬆️ Subir masivo</button>
+  </div>
+  <input type="file" id="adminBulkFile" accept=".xlsx,.xls,.csv" style="display:none">
   <input id="adminFoodSearch" placeholder="Buscar..." value="${q||''}" style="width:100%;background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:11px 12px;color:var(--text);font-size:15px;margin-bottom:10px">
   <div id="adminFoodList">${items.map(f=>`<div class="list-item">
     <div><div class="li-name">${f.n}</div><div class="li-sub">${f.c} · ${f.k} kcal /100g</div></div>
@@ -1184,15 +1227,70 @@ function renderAdminFoodsList(q){
    </div>`).join('') || `<div class="empty"><p>Sin resultados</p></div>`}</div>
  `);
  document.getElementById("adminAddFood").addEventListener("click", ()=>openFoodEditModal(null));
+ document.getElementById("adminDownloadTemplate").addEventListener("click", downloadFoodTemplate);
+ document.getElementById("adminBulkUploadBtn").addEventListener("click", ()=>document.getElementById("adminBulkFile").click());
+ document.getElementById("adminBulkFile").addEventListener("change", (e)=>{ const f=e.target.files[0]; if(f) handleBulkFoodFile(f); e.target.value=''; });
  document.getElementById("adminFoodSearch").addEventListener("input", (e)=>renderAdminFoodsList(e.target.value));
- app.querySelectorAll("[data-editfood]").forEach(b=>b.addEventListener("click",()=>openFoodEditModal(state.foods.find(f=>f.id===b.dataset.editfood))));
- app.querySelectorAll("[data-delfoodadmin]").forEach(b=>b.addEventListener("click", async ()=>{
+ document.querySelectorAll("[data-editfood]").forEach(b=>b.addEventListener("click",()=>openFoodEditModal(state.foods.find(f=>f.id===b.dataset.editfood))));
+ document.querySelectorAll("[data-delfoodadmin]").forEach(b=>b.addEventListener("click", async ()=>{
   const id=b.dataset.delfoodadmin;
   const { error } = await sb.from('foods').delete().eq('id', id);
   if(error){ toast("Error eliminando"); return; }
   state.foods = state.foods.filter(f=>f.id!==id);
   renderAdminFoodsList(document.getElementById("adminFoodSearch")?.value||"");
  }));
+}
+const FOOD_TEMPLATE_HEADERS = ["nombre","categoria","kcal","proteina","carbohidratos","grasa","unidad","gramos_por_unidad"];
+function downloadFoodTemplate(){
+ const example = [
+  ["Pechuga de pollo","Proteina",165,31,0,3.6,"",""],
+  ["Manzana","Fruta",52,0.3,14,0.2,"unidad",180],
+  ["Categorias validas: Proteina, Carbohidrato, Fruta, Verdura, Lacteo, Grasa, Snack, Bebida","","","","","","",""],
+ ];
+ const ws = XLSX.utils.aoa_to_sheet([FOOD_TEMPLATE_HEADERS, ...example]);
+ ws['!cols'] = FOOD_TEMPLATE_HEADERS.map(()=>({wch:18}));
+ const wb = XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb, ws, "Alimentos");
+ XLSX.writeFile(wb, "plantilla_alimentos.xlsx");
+}
+function normKey(k){ return String(k).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g,""); }
+function handleBulkFoodFile(file){
+ toast("Leyendo archivo...");
+ const reader = new FileReader();
+ reader.onload = async (e)=>{
+  try{
+   const data = new Uint8Array(e.target.result);
+   const wb = XLSX.read(data, {type:"array"});
+   const sheet = wb.Sheets[wb.SheetNames[0]];
+   const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
+   await bulkImportFoods(rows);
+  }catch(err){ toast("No se pudo leer el archivo"); }
+ };
+ reader.readAsArrayBuffer(file);
+}
+async function bulkImportFoods(rows){
+ const catByNorm = {}; FOOD_CATS.forEach(c=> catByNorm[normKey(c)]=c);
+ const toInsert = []; let skipped = 0;
+ rows.forEach(r=>{
+  const norm = {}; Object.keys(r).forEach(k=> norm[normKey(k)] = r[k]);
+  const name = String(norm["nombre"]||"").trim();
+  const cat = catByNorm[normKey(norm["categoria"]||"")];
+  const kcal = parseFloat(norm["kcal"]);
+  const protein = parseFloat(norm["proteina"]);
+  const carbs = parseFloat(norm["carbohidratos"]);
+  const fat = parseFloat(norm["grasa"]);
+  if(!name || !cat || isNaN(kcal) || isNaN(protein) || isNaN(carbs) || isNaN(fat)){ skipped++; return; }
+  const unit = String(norm["unidad"]||"").trim() || null;
+  const gramsRaw = norm["gramosporunidad"];
+  const grams = unit && gramsRaw!==undefined && gramsRaw!=="" && !isNaN(parseFloat(gramsRaw)) ? parseFloat(gramsRaw) : null;
+  toInsert.push({name, category:cat, kcal, protein, carbs, fat, unit_label:unit, grams_per_unit:grams});
+ });
+ if(!toInsert.length){ toast("No se encontraron filas validas en el archivo"); return; }
+ const { data, error } = await sb.from('foods').insert(toInsert).select();
+ if(error){ toast("Error al subir alimentos"); return; }
+ state.foods.push(...data.map(mapFood));
+ toast(`${data.length} alimentos agregados${skipped?` · ${skipped} filas omitidas`:''}`);
+ renderAdminFoodsList("");
 }
 function openFoodEditModal(food){
  const isNew = !food;
@@ -1237,7 +1335,7 @@ function openFoodEditModal(food){
 
 /* ============================= BIND: modal + tab-specific ============================= */
 function bindModalActions(){
- app.querySelectorAll("[data-close-modal]").forEach(b=>b.addEventListener("click", closeModal));
+ document.querySelectorAll("[data-close-modal]").forEach(b=>b.addEventListener("click", closeModal));
 }
 function bindCompareSlider(){
  const cmpSlider = document.getElementById("cmpSlider");
@@ -1296,6 +1394,7 @@ function bindTabSpecific(){
   bindCompareSlider();
  }
  if(tab==="perfil"){
+  const av = app.querySelector("[data-avatarupload]"); if(av) av.addEventListener("click", openAvatarUpload);
   app.querySelectorAll("[data-editprofile]").forEach(b=>b.addEventListener("click",()=>openEditProfileModal(b.dataset.editprofile)));
   app.querySelectorAll("[data-openhist]").forEach(b=>b.addEventListener("click",()=>openHistoryModal(b.dataset.openhist, state.myId)));
   const admin = app.querySelector("[data-openadminfoods]"); if(admin) admin.addEventListener("click", openAdminFoodsModal);
