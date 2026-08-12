@@ -1130,28 +1130,48 @@ async function runLabelOCR(canvas, pid, meal, barcode){
  }
 }
 function parseNutritionLabelText(text){
- const norm = text.toLowerCase().replace(/,/g, ".");
- const findNum = (regexes)=>{
-  for(const re of regexes){
-   const m = norm.match(re);
-   if(m) return parseFloat(m[1]);
+ let norm = text.toLowerCase().replace(/,/g, ".");
+ // quita ruido que trae numeros que no son valores nutricionales (tamano de porcion, encabezados de columna)
+ norm = norm
+  .replace(/tama[ñn]o de porci[oó]n[^\n]*/g, ' ')
+  .replace(/porciones?\s*por\s*envase[^\n]*/g, ' ')
+  .replace(/por\s*\d+\.?\d*\s*(ml|mL|g|gramos)/g, ' ')
+  .replace(/por\s*porci[oó]n/g, ' ');
+
+ // busca la etiqueta y toma el PRIMER numero que aparece despues de ella (funciona tanto en
+ // formato lineal "Proteinas 9.5g" como en formato de tabla "Grasa Total\n0 g   0 g")
+ const findAfterLabel = (labelRegexes, lookahead)=>{
+  lookahead = lookahead || 40;
+  for(const labelRe of labelRegexes){
+   const m = norm.match(labelRe);
+   if(!m) continue;
+   const from = m.index + m[0].length;
+   const window = norm.slice(from, from+lookahead);
+   const numMatch = window.match(/(\d+\.?\d*)/);
+   if(numMatch) return parseFloat(numMatch[1]);
   }
   return null;
  };
- let kcal = findNum([
-  /(?:valor energ[eé]tico|energ[ií]a total|energ[ií]a|calor[ií]as totales|calor[ií]as)[^\d]{0,25}(\d+\.?\d*)\s*k?cal/,
-  /(\d+\.?\d*)\s*kcal/,
- ]);
+
+ // formato lineal: el numero esta pegado a "kcal" (ej. "Valor energetico 42 kcal")
+ let kcal = null;
+ let m = norm.match(/(?:valor energ[eé]tico|energ[ií]a|calor[ií]as)[^\d]{0,25}(\d+\.?\d*)\s*kcal\b/);
+ if(m) kcal = parseFloat(m[1]);
+ // formato con kJ pegado al numero -> convertir
  if(kcal===null){
-  const kj = findNum([/(\d+\.?\d*)\s*kj/]);
-  if(kj!==null) kcal = Math.round(kj/4.184);
+  m = norm.match(/(\d+\.?\d*)\s*kj\b/);
+  if(m) kcal = Math.round(parseFloat(m[1])/4.184);
  }
- const protein = findNum([/prote[ií]nas?[^\d]{0,20}(\d+\.?\d*)\s*g/]);
- const carbs = findNum([/(?:carbohidratos totales|carbohidratos disponibles|hidratos de carbono totales|carbohidratos|hidratos de carbono)[^\d]{0,25}(\d+\.?\d*)\s*g/]);
- let fat = findNum([/(?:grasas totales|grasa total|l[ií]pidos totales)[^\d]{0,25}(\d+\.?\d*)\s*g/]);
+ // formato de tabla: la etiqueta y el valor estan separados (ej. "Calorias (kcal)" ... "0")
+ if(kcal===null){
+  kcal = findAfterLabel([/calor[ií]as\s*\(?kcal\)?/, /valor energ[eé]tico\s*\(?kcal\)?/, /energ[ií]a total/, /calor[ií]as totales/, /energ[ií]a/, /calor[ií]as/]);
+ }
+ const protein = findAfterLabel([/prote[ií]nas?/]);
+ const carbs = findAfterLabel([/carbohidratos totales/, /hidratos de carbono totales/, /carbohidratos disponibles/, /carbohidratos/, /hidratos de carbono/]);
+ let fat = findAfterLabel([/grasas totales/, /grasa total/, /l[ií]pidos totales/]);
  if(fat===null){
   const lines = norm.split("\n").filter(l=>/(grasas?|l[ií]pidos)\b/.test(l) && !/saturad/.test(l) && !/trans/.test(l));
-  for(const l of lines){ const m = l.match(/(\d+\.?\d*)\s*g/); if(m){ fat = parseFloat(m[1]); break; } }
+  for(const l of lines){ const m = l.match(/(\d+\.?\d*)/); if(m){ fat = parseFloat(m[1]); break; } }
  }
  return {kcal, protein, carbs, fat, rawText:text};
 }
