@@ -1185,7 +1185,7 @@ function avatarHtml(profile, size){
 function openAddPhotoModal(pid){
  openModal(`
   <div class="modal-head"><h3>Subir foto de progreso</h3><button class="modal-close" data-close-modal>✕</button></div>
-  <div class="field"><label>Foto</label><input id="mPhotoFile" type="file" accept="image/*" capture="environment"></div>
+  <div class="field"><label>Foto</label><input id="mPhotoFile" type="file" accept="image/*"></div>
   <div id="mPhotoPreview"></div>
   <div class="field"><label>Etiqueta</label><select id="mPhotoLabel">${PHOTO_LABELS.map(l=>`<option>${l}</option>`).join('')}</select></div>
   <div class="field"><label>Fecha</label><input id="mPhotoDate" type="date" value="${todayStr()}" max="${todayStr()}"></div>
