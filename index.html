@@ -921,7 +921,8 @@ async function toggleAttendance(pid, date){
 function openAddFoodModal(pid, meal){
  currentFoodPid = pid; currentFoodMeal = meal;
  openModal(`
-  <div class="modal-head"><h3>Agregar alimento</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div class="modal-head"><h3>Agregar a ${MEAL_TYPES.find(m=>m.k===meal)?.l||'comida'}</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div id="mMealSoFar"></div>
   <div class="field"><label>Comida</label><select id="mFoodMeal">${MEAL_TYPES.map(m=>`<option value="${m.k}" ${m.k===meal?'selected':''}>${m.ic} ${m.l}</option>`).join('')}</select></div>
   <div class="field"><label>Buscar alimento</label><input id="mFoodSearch" placeholder="Ej. pollo, arroz, manzana..." autocomplete="off"></div>
   <div class="field-row" style="margin-bottom:10px">
@@ -931,11 +932,35 @@ function openAddFoodModal(pid, meal){
   <div class="chiprow" id="mFoodCats" style="margin-bottom:10px">${FOOD_CATS.map(c=>`<span class="chip" data-cat="${c}">${c}</span>`).join('')}</div>
   <div id="mFoodResults" style="max-height:220px;overflow-y:auto;margin-bottom:10px"></div>
   <div id="mFoodDetail"></div>
+  <button class="btn" id="mFoodDone" style="margin-top:6px">✓ Listo, ya termine</button>
  `);
+ renderMealSoFar();
  renderFoodResults("", null);
  document.getElementById("mFoodSearch").addEventListener("input", e=> renderFoodResults(e.target.value, currentFoodCat));
- document.getElementById("mScanBtn").addEventListener("click", ()=>openBarcodeScanner(pid, meal));
- document.getElementById("mLabelBtn").addEventListener("click", ()=>openLabelScanner(pid, meal));
+ document.getElementById("mFoodMeal").addEventListener("change", e=>{ currentFoodMeal = e.target.value; renderMealSoFar(); });
+ document.getElementById("mScanBtn").addEventListener("click", ()=>openBarcodeScanner(pid, currentFoodMeal));
+ document.getElementById("mLabelBtn").addEventListener("click", ()=>openLabelScanner(pid, currentFoodMeal));
+ document.getElementById("mFoodDone").addEventListener("click", ()=>{ closeModal(); render(); });
+}
+function renderMealSoFar(){
+ const el = document.getElementById("mMealSoFar"); if(!el) return;
+ const items = state.foodLog.filter(e=>e.profileId===currentFoodPid && e.date===todayStr() && e.meal===currentFoodMeal);
+ if(!items.length){ el.innerHTML = ''; return; }
+ const total = items.reduce((a,e)=>a+e.kcal,0);
+ el.innerHTML = `<div class="card" style="margin-bottom:12px">
+  <div class="faint" style="margin-bottom:2px">Ya agregado a esta comida · ${total} kcal</div>
+  ${items.map(e=>`<div class="list-item" style="padding:6px 0">
+    <div class="li-l"><div><div class="li-name" style="font-size:13px">${e.food}</div><div class="li-sub">${e.qty} ${e.unitLabel} · ${e.kcal} kcal</div></div></div>
+    <button class="li-del" data-removesofar="${e.id}">✕</button>
+   </div>`).join('')}
+ </div>`;
+ el.querySelectorAll("[data-removesofar]").forEach(b=>b.addEventListener("click", async ()=>{
+  const id = b.dataset.removesofar;
+  const { error } = await sb.from('food_log').delete().eq('id', id);
+  if(error){ toast("Error eliminando"); return; }
+  state.foodLog = state.foodLog.filter(f=>f.id!==id);
+  renderMealSoFar();
+ }));
 }
 
 /* ============================= ESCANER DE CODIGO DE BARRAS (Open Food Facts) ============================= */
@@ -1041,7 +1066,8 @@ function showScannedProduct(prod, pid, meal){
   const { data, error } = await sb.from('food_log').insert(row).select().single();
   if(error){ toast("Error guardando"); btn.disabled = false; return; }
   state.foodLog.push(mapFoodLog(data));
-  closeModal(); toast("Alimento agregado"); render();
+  toast("Agregado ✓");
+  openAddFoodModal(pid, mealSel);
  });
 }
 
@@ -1058,7 +1084,7 @@ function openLabelScanner(pid, meal, barcode){
   <button class="btn secondary" id="mLabelManual" style="margin-top:8px">Buscar/agregar manualmente</button>
  `);
  document.getElementById("mLabelManual").addEventListener("click", ()=>openAddFoodModal(pid, meal));
- navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(stream=>{
+ navigator.mediaDevices.getUserMedia({video:{facingMode:"environment", width:{ideal:1920}, height:{ideal:1920}}}).then(stream=>{
   labelStream = stream;
   const video = document.getElementById("mLabelVideo");
   if(video) video.srcObject = stream;
@@ -1070,6 +1096,7 @@ function openLabelScanner(pid, meal, barcode){
   const canvas = document.createElement("canvas");
   canvas.width = video.videoWidth; canvas.height = video.videoHeight;
   canvas.getContext("2d").drawImage(video, 0, 0);
+  preprocessForOCR(canvas);
   stopLabelStream();
   runLabelOCR(canvas, pid, meal, barcode);
  });
@@ -1077,10 +1104,22 @@ function openLabelScanner(pid, meal, barcode){
 function stopLabelStream(){
  if(labelStream){ labelStream.getTracks().forEach(t=>t.stop()); labelStream = null; }
 }
+function preprocessForOCR(canvas){
+ const ctx = canvas.getContext("2d");
+ const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+ const d = img.data;
+ for(let i=0; i<d.length; i+=4){
+  const gray = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+  const contrast = clamp((gray-128)*1.6 + 128, 0, 255);
+  d[i] = d[i+1] = d[i+2] = contrast;
+ }
+ ctx.putImageData(img, 0, 0);
+}
 async function runLabelOCR(canvas, pid, meal, barcode){
  openModal(`<div class="modal-head"><h3>Leyendo etiqueta...</h3></div><div class="empty"><div class="ic">🔎</div><p>Esto puede tardar unos segundos</p></div>`);
  try{
   const worker = await Tesseract.createWorker("spa");
+  await worker.setParameters({tessedit_pageseg_mode:"6"});
   const { data:{ text } } = await worker.recognize(canvas);
   await worker.terminate();
   const parsed = parseNutritionLabelText(text);
@@ -1099,12 +1138,19 @@ function parseNutritionLabelText(text){
   }
   return null;
  };
- const kcal = findNum([/(?:valor energ[eé]tico|energ[ií]a|calor[ií]as)[^\d]{0,20}(\d+\.?\d*)\s*kcal/, /(\d+\.?\d*)\s*kcal/]);
- const protein = findNum([/prote[ií]nas?[^\d]{0,15}(\d+\.?\d*)\s*g/]);
- const carbs = findNum([/(?:carbohidratos totales|carbohidratos|hidratos de carbono)[^\d]{0,20}(\d+\.?\d*)\s*g/]);
- let fat = findNum([/(?:grasas totales|grasa total)[^\d]{0,20}(\d+\.?\d*)\s*g/]);
+ let kcal = findNum([
+  /(?:valor energ[eé]tico|energ[ií]a total|energ[ií]a|calor[ií]as totales|calor[ií]as)[^\d]{0,25}(\d+\.?\d*)\s*k?cal/,
+  /(\d+\.?\d*)\s*kcal/,
+ ]);
+ if(kcal===null){
+  const kj = findNum([/(\d+\.?\d*)\s*kj/]);
+  if(kj!==null) kcal = Math.round(kj/4.184);
+ }
+ const protein = findNum([/prote[ií]nas?[^\d]{0,20}(\d+\.?\d*)\s*g/]);
+ const carbs = findNum([/(?:carbohidratos totales|carbohidratos disponibles|hidratos de carbono totales|carbohidratos|hidratos de carbono)[^\d]{0,25}(\d+\.?\d*)\s*g/]);
+ let fat = findNum([/(?:grasas totales|grasa total|l[ií]pidos totales)[^\d]{0,25}(\d+\.?\d*)\s*g/]);
  if(fat===null){
-  const lines = norm.split("\n").filter(l=>/grasas?\b/.test(l) && !/saturada/.test(l));
+  const lines = norm.split("\n").filter(l=>/(grasas?|l[ií]pidos)\b/.test(l) && !/saturad/.test(l) && !/trans/.test(l));
   for(const l of lines){ const m = l.match(/(\d+\.?\d*)\s*g/); if(m){ fat = parseFloat(m[1]); break; } }
  }
  return {kcal, protein, carbs, fat, rawText:text};
@@ -1113,7 +1159,11 @@ function showLabelResult(parsed, pid, meal, barcode){
  const anyFound = [parsed.kcal, parsed.protein, parsed.carbs, parsed.fat].some(v=>v!==null);
  openModal(`
   <div class="modal-head"><h3>Revisa los datos</h3><button class="modal-close" data-close-modal>✕</button></div>
-  ${!anyFound? `<p class="faint" style="margin-bottom:10px">No se detecto ningun valor automaticamente — completa a mano.</p>` : `<p class="faint" style="margin-bottom:10px">Detectado automaticamente — revisa que este correcto antes de guardar.</p>`}
+  ${!anyFound? `<p class="faint" style="margin-bottom:6px">No se detecto ningun valor automaticamente — completa a mano.</p>
+    <details style="margin-bottom:10px"><summary class="faint" style="cursor:pointer">Ver texto detectado por la camara</summary>
+     <div class="faint" style="white-space:pre-wrap;margin-top:6px;font-size:11px;max-height:120px;overflow-y:auto">${(parsed.rawText||'(vacio)').replace(/</g,'&lt;')}</div>
+    </details>`
+   : `<p class="faint" style="margin-bottom:10px">Detectado automaticamente — revisa que este correcto antes de guardar.</p>`}
   <div class="field"><label>Nombre del producto</label><input id="lName" placeholder="Ej. Te Hatsu durazno"></div>
   <div class="field"><label>Categoria</label><select id="lCat">${FOOD_CATS.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div>
   <div class="field-row">
@@ -1146,12 +1196,14 @@ function showLabelResult(parsed, pid, meal, barcode){
   state.foods.push(mapFood(newFood));
   const qty = +document.getElementById("lQty").value || 0;
   const factor = qty/100;
-  const logRow = { user_id: pid, date: todayStr(), meal: document.getElementById("lMeal").value, food_name: name, qty, unit_label: "g",
+  const mealSel = document.getElementById("lMeal").value;
+  const logRow = { user_id: pid, date: todayStr(), meal: mealSel, food_name: name, qty, unit_label: "g",
    kcal: Math.round(kcal*factor), protein: round1(protein*factor), carbs: round1(carbs*factor), fat: round1(fat*factor) };
   const { data: logData, error: logErr } = await sb.from('food_log').insert(logRow).select().single();
   if(logErr){ toast("Se guardo en la base pero no se pudo registrar hoy: " + logErr.message); btn.disabled=false; return; }
   state.foodLog.push(mapFoodLog(logData));
-  closeModal(); toast("Guardado en tu base y agregado a hoy"); render();
+  toast("Guardado en tu base y agregado a hoy");
+  openAddFoodModal(pid, mealSel);
  });
 }
 
@@ -1209,7 +1261,12 @@ function pickFood(foodId){
   const { data, error } = await sb.from('food_log').insert(row).select().single();
   if(error){ toast("Error guardando"); btn.disabled=false; return; }
   state.foodLog.push(mapFoodLog(data));
-  closeModal(); toast("Alimento agregado"); render();
+  toast("Agregado ✓");
+  selectedFood = null;
+  document.getElementById("mFoodSearch").value = "";
+  document.getElementById("mFoodDetail").innerHTML = "";
+  renderMealSoFar();
+  renderFoodResults("", currentFoodCat);
  });
 }
 function openLogWeightModal(pid){
