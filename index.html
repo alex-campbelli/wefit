@@ -192,6 +192,7 @@ input,select,textarea{font-family:inherit;}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@6/dist/tesseract.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -254,7 +255,7 @@ function round1(v){ return Math.round(v*10)/10; }
 
 /* ============================= MAPPERS (DB row -> app shape) ============================= */
 function mapProfile(r){ return {id:r.id, name:r.name, age:r.age, sex:r.sex, height:r.height, initialWeight:Number(r.initial_weight), currentWeight:Number(r.current_weight), goalWeight:r.goal_weight!=null?Number(r.goal_weight):null, objective:r.objective, activityLevel:r.activity_level, startDate:r.start_date, createdAt:r.created_at, avatarUrl:r.avatar_url||null}; }
-function mapFood(r){ return {id:r.id, n:r.name, c:r.category, unit:r.unit_label, g:r.grams_per_unit?Number(r.grams_per_unit):null, k:Number(r.kcal), p:Number(r.protein), cb:Number(r.carbs), f:Number(r.fat)}; }
+function mapFood(r){ return {id:r.id, n:r.name, c:r.category, unit:r.unit_label, g:r.grams_per_unit?Number(r.grams_per_unit):null, k:Number(r.kcal), p:Number(r.protein), cb:Number(r.carbs), f:Number(r.fat), barcode:r.barcode||null}; }
 function mapWeight(r){ return {id:r.id, profileId:r.user_id, date:r.date, weight:Number(r.weight)}; }
 function mapFoodLog(r){ return {id:r.id, profileId:r.user_id, date:r.date, meal:r.meal, food:r.food_name, qty:Number(r.qty), unitLabel:r.unit_label, kcal:Number(r.kcal), protein:Number(r.protein), carbs:Number(r.carbs), fat:Number(r.fat)}; }
 function mapAttendance(r){ return {id:r.id, profileId:r.user_id, date:r.date}; }
@@ -888,7 +889,7 @@ function openModal(html){
  document.body.appendChild(bg);
  bindModalActions();
 }
-function closeModal(){ stopScanner(); const m=document.getElementById("modalBg"); if(m) m.remove(); }
+function closeModal(){ stopScanner(); stopLabelStream(); const m=document.getElementById("modalBg"); if(m) m.remove(); }
 
 function openQuick(type){
  const pid = state.myId;
@@ -923,7 +924,10 @@ function openAddFoodModal(pid, meal){
   <div class="modal-head"><h3>Agregar alimento</h3><button class="modal-close" data-close-modal>✕</button></div>
   <div class="field"><label>Comida</label><select id="mFoodMeal">${MEAL_TYPES.map(m=>`<option value="${m.k}" ${m.k===meal?'selected':''}>${m.ic} ${m.l}</option>`).join('')}</select></div>
   <div class="field"><label>Buscar alimento</label><input id="mFoodSearch" placeholder="Ej. pollo, arroz, manzana..." autocomplete="off"></div>
-  <button class="btn small secondary" id="mScanBtn" style="width:100%;margin-bottom:10px">📷 Escanear codigo de barras</button>
+  <div class="field-row" style="margin-bottom:10px">
+   <button class="btn small secondary" id="mScanBtn" style="flex:1">📷 Codigo de barras</button>
+   <button class="btn small secondary" id="mLabelBtn" style="flex:1">📋 Etiqueta nutricional</button>
+  </div>
   <div class="chiprow" id="mFoodCats" style="margin-bottom:10px">${FOOD_CATS.map(c=>`<span class="chip" data-cat="${c}">${c}</span>`).join('')}</div>
   <div id="mFoodResults" style="max-height:220px;overflow-y:auto;margin-bottom:10px"></div>
   <div id="mFoodDetail"></div>
@@ -931,6 +935,7 @@ function openAddFoodModal(pid, meal){
  renderFoodResults("", null);
  document.getElementById("mFoodSearch").addEventListener("input", e=> renderFoodResults(e.target.value, currentFoodCat));
  document.getElementById("mScanBtn").addEventListener("click", ()=>openBarcodeScanner(pid, meal));
+ document.getElementById("mLabelBtn").addEventListener("click", ()=>openLabelScanner(pid, meal));
 }
 
 /* ============================= ESCANER DE CODIGO DE BARRAS (Open Food Facts) ============================= */
@@ -968,13 +973,24 @@ function stopScanner(){
  if(zxingReader){ try{ zxingReader.reset(); }catch(e){} zxingReader = null; }
 }
 async function lookupBarcode(code, pid, meal){
+ const own = state.foods.find(f=>f.barcode===code);
+ if(own){
+  showScannedProduct({name:own.n, brand:"De tu propia base", kcal:own.k, protein:own.p, carbs:own.cb, fat:own.f, code}, pid, meal);
+  return;
+ }
  openModal(`<div class="modal-head"><h3>Buscando...</h3></div><div class="empty"><div class="ic">🔍</div><p>Consultando Open Food Facts...</p></div>`);
  try{
   const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json`);
   const data = await res.json();
   if(data.status !== 1 || !data.product){
-   toast("Producto no encontrado en Open Food Facts");
-   openAddFoodModal(pid, meal);
+   openModal(`
+    <div class="modal-head"><h3>No encontrado</h3><button class="modal-close" data-close-modal>✕</button></div>
+    <div class="empty"><div class="ic">🔍</div><p>Este producto no esta en Open Food Facts. Puedes escanear la etiqueta nutricional del empaque, o buscarlo/agregarlo manualmente.</p></div>
+    <button class="btn" id="mNotFoundLabel" style="margin-top:6px">📋 Escanear etiqueta nutricional</button>
+    <button class="btn secondary" id="mNotFoundManual" style="margin-top:8px">Buscar/agregar manualmente</button>
+   `);
+   document.getElementById("mNotFoundLabel").addEventListener("click", ()=>openLabelScanner(pid, meal, code));
+   document.getElementById("mNotFoundManual").addEventListener("click", ()=>openAddFoodModal(pid, meal));
    return;
   }
   const p = data.product;
@@ -1028,6 +1044,117 @@ function showScannedProduct(prod, pid, meal){
   closeModal(); toast("Alimento agregado"); render();
  });
 }
+
+/* ============================= ESCANER DE ETIQUETA NUTRICIONAL (OCR) ============================= */
+let labelStream = null;
+function openLabelScanner(pid, meal, barcode){
+ openModal(`
+  <div class="modal-head"><h3>Escanear etiqueta</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div style="position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:3/4">
+   <video id="mLabelVideo" style="width:100%;height:100%;object-fit:cover;display:block" playsinline muted autoplay></video>
+  </div>
+  <p class="faint" style="text-align:center;margin-top:10px">Encuadra la tabla de "Informacion Nutricional" bien iluminada y sin reflejos</p>
+  <button class="btn" id="mLabelCapture" style="margin-top:10px">📸 Capturar</button>
+  <button class="btn secondary" id="mLabelManual" style="margin-top:8px">Buscar/agregar manualmente</button>
+ `);
+ document.getElementById("mLabelManual").addEventListener("click", ()=>openAddFoodModal(pid, meal));
+ navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(stream=>{
+  labelStream = stream;
+  const video = document.getElementById("mLabelVideo");
+  if(video) video.srcObject = stream;
+ }).catch(()=>{
+  toast("No se pudo acceder a la camara. Revisa los permisos de Safari.");
+ });
+ document.getElementById("mLabelCapture").addEventListener("click", ()=>{
+  const video = document.getElementById("mLabelVideo");
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+  stopLabelStream();
+  runLabelOCR(canvas, pid, meal, barcode);
+ });
+}
+function stopLabelStream(){
+ if(labelStream){ labelStream.getTracks().forEach(t=>t.stop()); labelStream = null; }
+}
+async function runLabelOCR(canvas, pid, meal, barcode){
+ openModal(`<div class="modal-head"><h3>Leyendo etiqueta...</h3></div><div class="empty"><div class="ic">🔎</div><p>Esto puede tardar unos segundos</p></div>`);
+ try{
+  const worker = await Tesseract.createWorker("spa");
+  const { data:{ text } } = await worker.recognize(canvas);
+  await worker.terminate();
+  const parsed = parseNutritionLabelText(text);
+  showLabelResult(parsed, pid, meal, barcode);
+ }catch(err){
+  toast("No se pudo leer la etiqueta. Intenta con mejor luz o agrega manualmente.");
+  openAddFoodModal(pid, meal);
+ }
+}
+function parseNutritionLabelText(text){
+ const norm = text.toLowerCase().replace(/,/g, ".");
+ const findNum = (regexes)=>{
+  for(const re of regexes){
+   const m = norm.match(re);
+   if(m) return parseFloat(m[1]);
+  }
+  return null;
+ };
+ const kcal = findNum([/(?:valor energ[eé]tico|energ[ií]a|calor[ií]as)[^\d]{0,20}(\d+\.?\d*)\s*kcal/, /(\d+\.?\d*)\s*kcal/]);
+ const protein = findNum([/prote[ií]nas?[^\d]{0,15}(\d+\.?\d*)\s*g/]);
+ const carbs = findNum([/(?:carbohidratos totales|carbohidratos|hidratos de carbono)[^\d]{0,20}(\d+\.?\d*)\s*g/]);
+ let fat = findNum([/(?:grasas totales|grasa total)[^\d]{0,20}(\d+\.?\d*)\s*g/]);
+ if(fat===null){
+  const lines = norm.split("\n").filter(l=>/grasas?\b/.test(l) && !/saturada/.test(l));
+  for(const l of lines){ const m = l.match(/(\d+\.?\d*)\s*g/); if(m){ fat = parseFloat(m[1]); break; } }
+ }
+ return {kcal, protein, carbs, fat, rawText:text};
+}
+function showLabelResult(parsed, pid, meal, barcode){
+ const anyFound = [parsed.kcal, parsed.protein, parsed.carbs, parsed.fat].some(v=>v!==null);
+ openModal(`
+  <div class="modal-head"><h3>Revisa los datos</h3><button class="modal-close" data-close-modal>✕</button></div>
+  ${!anyFound? `<p class="faint" style="margin-bottom:10px">No se detecto ningun valor automaticamente — completa a mano.</p>` : `<p class="faint" style="margin-bottom:10px">Detectado automaticamente — revisa que este correcto antes de guardar.</p>`}
+  <div class="field"><label>Nombre del producto</label><input id="lName" placeholder="Ej. Te Hatsu durazno"></div>
+  <div class="field"><label>Categoria</label><select id="lCat">${FOOD_CATS.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div>
+  <div class="field-row">
+   <div class="field"><label>Kcal /100g</label><input id="lKcal" type="number" step="any" value="${parsed.kcal ?? ''}"></div>
+   <div class="field"><label>Proteina /100g</label><input id="lProt" type="number" step="any" value="${parsed.protein ?? ''}"></div>
+  </div>
+  <div class="field-row">
+   <div class="field"><label>Carbos /100g</label><input id="lCarb" type="number" step="any" value="${parsed.carbs ?? ''}"></div>
+   <div class="field"><label>Grasa /100g</label><input id="lFat" type="number" step="any" value="${parsed.fat ?? ''}"></div>
+  </div>
+  <div class="field-row">
+   <div class="field"><label>Cantidad que comiste (g)</label><input id="lQty" type="number" value="100"></div>
+   <div class="field"><label>Comida</label><select id="lMeal">${MEAL_TYPES.map(m=>`<option value="${m.k}" ${m.k===meal?'selected':''}>${m.ic} ${m.l}</option>`).join('')}</select></div>
+  </div>
+  <button class="btn" id="lSave" style="margin-top:8px">Guardar y agregar a mi base</button>
+  <button class="btn secondary" id="lRetry" style="margin-top:8px">Volver a capturar</button>
+ `);
+ document.getElementById("lRetry").addEventListener("click", ()=>openLabelScanner(pid, meal, barcode));
+ document.getElementById("lSave").addEventListener("click", async ()=>{
+  const name = document.getElementById("lName").value.trim();
+  if(!name){ toast("Escribe el nombre del producto"); return; }
+  const btn = document.getElementById("lSave"); btn.disabled = true; btn.textContent = "Guardando...";
+  const kcal = +document.getElementById("lKcal").value || 0;
+  const protein = +document.getElementById("lProt").value || 0;
+  const carbs = +document.getElementById("lCarb").value || 0;
+  const fat = +document.getElementById("lFat").value || 0;
+  const foodRow = { name, category: document.getElementById("lCat").value, kcal, protein, carbs, fat, unit_label:null, grams_per_unit:null, barcode: barcode||null };
+  const { data: newFood, error: foodErr } = await sb.from('foods').insert(foodRow).select().single();
+  if(foodErr){ toast("Error guardando en la base: " + foodErr.message); btn.disabled=false; btn.textContent="Guardar y agregar a mi base"; return; }
+  state.foods.push(mapFood(newFood));
+  const qty = +document.getElementById("lQty").value || 0;
+  const factor = qty/100;
+  const logRow = { user_id: pid, date: todayStr(), meal: document.getElementById("lMeal").value, food_name: name, qty, unit_label: "g",
+   kcal: Math.round(kcal*factor), protein: round1(protein*factor), carbs: round1(carbs*factor), fat: round1(fat*factor) };
+  const { data: logData, error: logErr } = await sb.from('food_log').insert(logRow).select().single();
+  if(logErr){ toast("Se guardo en la base pero no se pudo registrar hoy: " + logErr.message); btn.disabled=false; return; }
+  state.foodLog.push(mapFoodLog(logData));
+  closeModal(); toast("Guardado en tu base y agregado a hoy"); render();
+ });
+}
+
 let currentFoodCat=null, selectedFood=null, currentFoodPid=null, currentFoodMeal=null;
 function renderFoodResults(q, cat){
  currentFoodCat = cat;
