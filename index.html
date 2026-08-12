@@ -1141,7 +1141,7 @@ function parseNutritionLabelText(text){
  // busca la etiqueta y toma el PRIMER numero que aparece despues de ella (funciona tanto en
  // formato lineal "Proteinas 9.5g" como en formato de tabla "Grasa Total\n0 g   0 g")
  const findAfterLabel = (labelRegexes, lookahead)=>{
-  lookahead = lookahead || 40;
+  lookahead = lookahead || 70;
   for(const labelRe of labelRegexes){
    const m = norm.match(labelRe);
    if(!m) continue;
@@ -1150,6 +1150,15 @@ function parseNutritionLabelText(text){
    const numMatch = window.match(/(\d+\.?\d*)/);
    if(numMatch) return parseFloat(numMatch[1]);
   }
+  return null;
+ };
+
+ // ultimo recurso: recorre linea por linea buscando una que tenga la palabra clave (y no tenga
+ // palabras excluidas, ej. "saturada") y toma el primer numero de ESA linea. Ayuda cuando el OCR
+ // desordeno una tabla y el numero quedo lejos de la etiqueta en el texto completo.
+ const findInLines = (keywordRe, excludeRe)=>{
+  const lines = norm.split("\n").filter(l=> keywordRe.test(l) && !(excludeRe && excludeRe.test(l)));
+  for(const l of lines){ const mm = l.match(/(\d+\.?\d*)/); if(mm) return parseFloat(mm[1]); }
   return null;
  };
 
@@ -1166,24 +1175,28 @@ function parseNutritionLabelText(text){
  if(kcal===null){
   kcal = findAfterLabel([/calor[ií]as\s*\(?kcal\)?/, /valor energ[eé]tico\s*\(?kcal\)?/, /energ[ií]a total/, /calor[ií]as totales/, /energ[ií]a/, /calor[ií]as/]);
  }
- const protein = findAfterLabel([/prote[ií]nas?/]);
- const carbs = findAfterLabel([/carbohidratos totales/, /hidratos de carbono totales/, /carbohidratos disponibles/, /carbohidratos/, /hidratos de carbono/]);
+ if(kcal===null) kcal = findInLines(/(energ[ií]a|calor[ií]as)/);
+
+ let protein = findAfterLabel([/prote[ií]nas?/]);
+ if(protein===null) protein = findInLines(/prote[ií]nas?/);
+
+ let carbs = findAfterLabel([/carbohidratos totales/, /hidratos de carbono totales/, /carbohidratos disponibles/, /carbohidratos/, /hidratos de carbono/]);
+ if(carbs===null) carbs = findInLines(/(carbohidratos|hidratos de carbono)/);
+
  let fat = findAfterLabel([/grasas totales/, /grasa total/, /l[ií]pidos totales/]);
- if(fat===null){
-  const lines = norm.split("\n").filter(l=>/(grasas?|l[ií]pidos)\b/.test(l) && !/saturad/.test(l) && !/trans/.test(l));
-  for(const l of lines){ const m = l.match(/(\d+\.?\d*)/); if(m){ fat = parseFloat(m[1]); break; } }
- }
+ if(fat===null) fat = findInLines(/(grasas?|l[ií]pidos)\b/, /saturad|trans/);
+
  return {kcal, protein, carbs, fat, rawText:text};
 }
 function showLabelResult(parsed, pid, meal, barcode){
  const anyFound = [parsed.kcal, parsed.protein, parsed.carbs, parsed.fat].some(v=>v!==null);
+ const allFound = [parsed.kcal, parsed.protein, parsed.carbs, parsed.fat].every(v=>v!==null);
  openModal(`
   <div class="modal-head"><h3>Revisa los datos</h3><button class="modal-close" data-close-modal>✕</button></div>
-  ${!anyFound? `<p class="faint" style="margin-bottom:6px">No se detecto ningun valor automaticamente — completa a mano.</p>
-    <details style="margin-bottom:10px"><summary class="faint" style="cursor:pointer">Ver texto detectado por la camara</summary>
-     <div class="faint" style="white-space:pre-wrap;margin-top:6px;font-size:11px;max-height:120px;overflow-y:auto">${(parsed.rawText||'(vacio)').replace(/</g,'&lt;')}</div>
-    </details>`
-   : `<p class="faint" style="margin-bottom:10px">Detectado automaticamente — revisa que este correcto antes de guardar.</p>`}
+  <p class="faint" style="margin-bottom:6px">${!anyFound? 'No se detecto ningun valor automaticamente — completa a mano.' : allFound? 'Detectado automaticamente — revisa que este correcto antes de guardar.' : 'Se detectaron algunos valores — completa los que falten y revisa antes de guardar.'}</p>
+  <details style="margin-bottom:10px"><summary class="faint" style="cursor:pointer">Ver texto detectado por la camara</summary>
+   <div class="faint" style="white-space:pre-wrap;margin-top:6px;font-size:11px;max-height:150px;overflow-y:auto">${(parsed.rawText||'(vacio)').replace(/</g,'&lt;')}</div>
+  </details>
   <div class="field"><label>Nombre del producto</label><input id="lName" placeholder="Ej. Te Hatsu durazno"></div>
   <div class="field"><label>Categoria</label><select id="lCat">${FOOD_CATS.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div>
   <div class="field-row">
