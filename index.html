@@ -1131,6 +1131,14 @@ function openAddWorkoutModal(pid){
   closeModal(); toast("Entrenamiento registrado"); render();
  });
 }
+function validateImageType(file){
+ if(!file.type.startsWith("image/")){ toast("Selecciona un archivo de imagen valido."); return false; }
+ return true;
+}
+function checkBlobSize(blob, maxMB){
+ if(blob.size > maxMB*1024*1024){ toast(`La foto sigue pesando mucho incluso comprimida (maximo ${maxMB}MB). Prueba con otra foto.`); return false; }
+ return true;
+}
 function resizeImageToCanvas(file, cb, maxW){
  maxW = maxW || 900;
  const reader = new FileReader();
@@ -1150,16 +1158,18 @@ function openAvatarUpload(){
  const input = document.createElement("input"); input.type="file"; input.accept="image/*";
  input.addEventListener("change",(e)=>{
   const f=e.target.files[0]; if(!f) return;
+  if(!validateImageType(f)) return;
   resizeImageToCanvas(f, (canvas)=>{
    canvas.toBlob(async (blob)=>{
+    if(!checkBlobSize(blob, 3)) return;
     toast("Subiendo foto de perfil...");
     const path = `${state.myId}/avatar.jpg`;
     const { error: upErr } = await sb.storage.from("avatars").upload(path, blob, {contentType:"image/jpeg", upsert:true});
-    if(upErr){ toast("Error subiendo la foto"); return; }
+    if(upErr){ toast("Error subiendo: " + upErr.message); console.error("avatar upload error", upErr); return; }
     const { data: pub } = sb.storage.from("avatars").getPublicUrl(path);
     const url = pub.publicUrl + "?t=" + Date.now();
     const { error } = await sb.from('profiles').update({avatar_url:url}).eq('id', state.myId);
-    if(error){ toast("Error guardando"); return; }
+    if(error){ toast("Error guardando: " + error.message); console.error("avatar profile update error", error); return; }
     state.profiles[state.myId].avatarUrl = url;
     toast("Foto de perfil actualizada"); render();
    }, "image/jpeg", 0.85);
@@ -1184,12 +1194,14 @@ function openAddPhotoModal(pid){
  let previewCanvas=null;
  document.getElementById("mPhotoFile").addEventListener("change",(e)=>{
   const f=e.target.files[0]; if(!f) return;
+  if(!validateImageType(f)) return;
   resizeImageToCanvas(f,(canvas)=>{ previewCanvas=canvas; document.getElementById("mPhotoPreview").innerHTML = `<img src="${canvas.toDataURL('image/jpeg',0.72)}" style="width:100%;border-radius:14px;margin-bottom:10px">`; document.getElementById("mPhotoSave").disabled=false; });
  });
  document.getElementById("mPhotoSave").addEventListener("click", ()=>{
   if(!previewCanvas){ toast("Selecciona una foto"); return; }
   const btn = document.getElementById("mPhotoSave"); btn.disabled=true; btn.textContent="Subiendo...";
   previewCanvas.toBlob(async (blob)=>{
+   if(!checkBlobSize(blob, 5)){ btn.disabled=false; btn.textContent="Guardar"; return; }
    const path = `${pid}/${Date.now()}.jpg`;
    const { error: upErr } = await sb.storage.from(PHOTOS_BUCKET).upload(path, blob, {contentType:'image/jpeg'});
    if(upErr){ toast("Error subiendo la foto"); btn.disabled=false; btn.textContent="Guardar"; return; }
