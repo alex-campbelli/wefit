@@ -189,6 +189,7 @@ input,select,textarea{font-family:inherit;}
 <div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -419,7 +420,7 @@ function renderOnboarding(){
   <div class="onb-sub">Cuentanos un poco sobre ti para calcular tus metas</div>
   <div class="field"><label>Nombre</label><input id="f_name" placeholder="Nombre"></div>
   <div class="field-row">
-    <div class="field"><label>Edad</label><input id="f_age" type="number" placeholder="Anos"></div>
+    <div class="field"><label>Edad</label><input id="f_age" type="number" placeholder="Años"></div>
     <div class="field"><label>Sexo</label><select id="f_sex"><option value="M">Hombre</option><option value="F">Mujer</option></select></div>
   </div>
   <div class="field-row">
@@ -849,7 +850,7 @@ function renderPerfil(){
     </div>
     <div style="flex:1;min-width:0">
      <div class="card-row"><b style="font-size:16px">${profile.name}</b><button class="btn small ghost" data-editprofile="${pid}">Editar</button></div>
-     <div class="faint" style="margin-top:6px">${profile.age} anos · ${profile.sex==='M'?'Hombre':'Mujer'} · ${profile.height} cm</div>
+     <div class="faint" style="margin-top:6px">${profile.age} años · ${profile.sex==='M'?'Hombre':'Mujer'} · ${profile.height} cm</div>
     </div>
    </div>
    <div class="faint" style="margin-top:10px">Objetivo: ${GOALS_OBJ.find(o=>o.k===profile.objective)?.l} · ${ACTIVITY_LEVELS.find(a=>a.k===profile.activityLevel)?.l}</div>
@@ -884,7 +885,7 @@ function openModal(html){
  document.body.appendChild(bg);
  bindModalActions();
 }
-function closeModal(){ const m=document.getElementById("modalBg"); if(m) m.remove(); }
+function closeModal(){ stopScanner(); const m=document.getElementById("modalBg"); if(m) m.remove(); }
 
 function openQuick(type){
  const pid = state.myId;
@@ -918,12 +919,110 @@ function openAddFoodModal(pid, meal){
   <div class="modal-head"><h3>Agregar alimento</h3><button class="modal-close" data-close-modal>✕</button></div>
   <div class="field"><label>Comida</label><select id="mFoodMeal">${MEAL_TYPES.map(m=>`<option value="${m.k}" ${m.k===meal?'selected':''}>${m.ic} ${m.l}</option>`).join('')}</select></div>
   <div class="field"><label>Buscar alimento</label><input id="mFoodSearch" placeholder="Ej. pollo, arroz, manzana..." autocomplete="off"></div>
+  <button class="btn small secondary" id="mScanBtn" style="width:100%;margin-bottom:10px">📷 Escanear codigo de barras</button>
   <div class="chiprow" id="mFoodCats" style="margin-bottom:10px">${FOOD_CATS.map(c=>`<span class="chip" data-cat="${c}">${c}</span>`).join('')}</div>
   <div id="mFoodResults" style="max-height:220px;overflow-y:auto;margin-bottom:10px"></div>
   <div id="mFoodDetail"></div>
  `);
  renderFoodResults("", null);
  document.getElementById("mFoodSearch").addEventListener("input", e=> renderFoodResults(e.target.value, currentFoodCat));
+ document.getElementById("mScanBtn").addEventListener("click", ()=>openBarcodeScanner(pid, meal));
+}
+
+/* ============================= ESCANER DE CODIGO DE BARRAS (Open Food Facts) ============================= */
+let zxingReader = null;
+function openBarcodeScanner(pid, meal){
+ openModal(`
+  <div class="modal-head"><h3>Escanear codigo</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div style="position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:3/4">
+   <video id="mScanVideo" style="width:100%;height:100%;object-fit:cover;display:block" playsinline muted></video>
+   <div style="position:absolute;inset:16px;border:3px solid var(--a);border-radius:14px;pointer-events:none;opacity:.7"></div>
+  </div>
+  <p class="faint" style="text-align:center;margin-top:10px">Apunta la camara al codigo de barras del producto</p>
+  <div id="mScanStatus" class="faint" style="text-align:center;margin-top:4px"></div>
+  <button class="btn secondary" id="mScanManual" style="margin-top:10px">Buscar manualmente en su lugar</button>
+ `);
+ document.getElementById("mScanManual").addEventListener("click", ()=>openAddFoodModal(pid, meal));
+ startScanner(pid, meal);
+}
+function startScanner(pid, meal){
+ try{
+  zxingReader = new ZXing.BrowserMultiFormatReader();
+  zxingReader.decodeFromVideoDevice(undefined, "mScanVideo", (result, err)=>{
+   if(result){
+    const code = result.getText();
+    stopScanner();
+    lookupBarcode(code, pid, meal);
+   }
+  });
+ }catch(err){
+  const st = document.getElementById("mScanStatus");
+  if(st) st.textContent = "No se pudo acceder a la camara. Revisa los permisos de Safari.";
+ }
+}
+function stopScanner(){
+ if(zxingReader){ try{ zxingReader.reset(); }catch(e){} zxingReader = null; }
+}
+async function lookupBarcode(code, pid, meal){
+ openModal(`<div class="modal-head"><h3>Buscando...</h3></div><div class="empty"><div class="ic">🔍</div><p>Consultando Open Food Facts...</p></div>`);
+ try{
+  const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json`);
+  const data = await res.json();
+  if(data.status !== 1 || !data.product){
+   toast("Producto no encontrado en Open Food Facts");
+   openAddFoodModal(pid, meal);
+   return;
+  }
+  const p = data.product;
+  const n = p.nutriments || {};
+  const kcal = n["energy-kcal_100g"] ?? (n["energy_100g"] ? n["energy_100g"]/4.184 : 0);
+  showScannedProduct({
+   name: p.product_name || p.generic_name || "Producto sin nombre",
+   brand: p.brands || "",
+   kcal: Math.round(kcal||0), protein: n["proteins_100g"]||0, carbs: n["carbohydrates_100g"]||0, fat: n["fat_100g"]||0,
+   code
+  }, pid, meal);
+ }catch(err){
+  toast("Error consultando Open Food Facts");
+  openAddFoodModal(pid, meal);
+ }
+}
+function showScannedProduct(prod, pid, meal){
+ openModal(`
+  <div class="modal-head"><h3>Producto encontrado</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <div class="card">
+   <b>${prod.name}</b>
+   ${prod.brand? `<div class="faint">${prod.brand}</div>` : ''}
+   <div class="faint" style="margin-top:4px">Codigo: ${prod.code}</div>
+   <div class="field-row" style="margin-top:10px">
+    <div class="field"><label>Cantidad (g)</label><input id="mScanQty" type="number" value="100"></div>
+    <div class="field"><label>Comida</label><select id="mScanMeal">${MEAL_TYPES.map(m=>`<option value="${m.k}" ${m.k===meal?'selected':''}>${m.ic} ${m.l}</option>`).join('')}</select></div>
+   </div>
+   <div class="faint" id="mScanCalc"></div>
+   <button class="btn" id="mScanAdd" style="margin-top:8px">Agregar</button>
+  </div>
+  <button class="btn secondary" id="mScanSearchInstead" style="margin-top:10px">Buscar manualmente en su lugar</button>
+ `);
+ const recalc = ()=>{
+  const qty = +document.getElementById("mScanQty").value || 0;
+  const factor = qty/100;
+  document.getElementById("mScanCalc").textContent = `${Math.round(prod.kcal*factor)} kcal · P${round1(prod.protein*factor)}g C${round1(prod.carbs*factor)}g G${round1(prod.fat*factor)}g`;
+ };
+ recalc();
+ document.getElementById("mScanQty").addEventListener("input", recalc);
+ document.getElementById("mScanSearchInstead").addEventListener("click", ()=>openAddFoodModal(pid, meal));
+ document.getElementById("mScanAdd").addEventListener("click", async ()=>{
+  const btn = document.getElementById("mScanAdd"); btn.disabled = true;
+  const qty = +document.getElementById("mScanQty").value || 0;
+  const mealSel = document.getElementById("mScanMeal").value;
+  const factor = qty/100;
+  const row = { user_id: state.myId, date: todayStr(), meal: mealSel, food_name: prod.name, qty, unit_label: "g",
+   kcal: Math.round(prod.kcal*factor), protein: round1(prod.protein*factor), carbs: round1(prod.carbs*factor), fat: round1(prod.fat*factor) };
+  const { data, error } = await sb.from('food_log').insert(row).select().single();
+  if(error){ toast("Error guardando"); btn.disabled = false; return; }
+  state.foodLog.push(mapFoodLog(data));
+  closeModal(); toast("Alimento agregado"); render();
+ });
 }
 let currentFoodCat=null, selectedFood=null;
 function renderFoodResults(q, cat){
@@ -1216,9 +1315,10 @@ function renderAdminFoodsList(q){
   <div class="modal-head"><h3>Base de alimentos</h3><button class="modal-close" data-close-modal>✕</button></div>
   <button class="btn small" id="adminAddFood" style="width:100%;margin-bottom:10px">+ Agregar alimento</button>
   <div class="field-row" style="margin-bottom:10px">
-   <button class="btn small secondary" id="adminDownloadTemplate" style="flex:1">⬇️ Plantilla Excel</button>
+   <button class="btn small secondary" id="adminDownloadTemplate" style="flex:1">⬇️ Plantilla</button>
    <button class="btn small secondary" id="adminBulkUploadBtn" style="flex:1">⬆️ Subir masivo</button>
   </div>
+  <button class="btn small ghost" id="adminExportFoods" style="width:100%;margin-bottom:10px">📦 Exportar base completa (Excel)</button>
   <input type="file" id="adminBulkFile" accept=".xlsx,.xls,.csv" style="display:none">
   <input id="adminFoodSearch" placeholder="Buscar..." value="${q||''}" style="width:100%;background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:11px 12px;color:var(--text);font-size:15px;margin-bottom:10px">
   <div id="adminFoodList">${items.map(f=>`<div class="list-item">
@@ -1228,6 +1328,7 @@ function renderAdminFoodsList(q){
  `);
  document.getElementById("adminAddFood").addEventListener("click", ()=>openFoodEditModal(null));
  document.getElementById("adminDownloadTemplate").addEventListener("click", downloadFoodTemplate);
+ document.getElementById("adminExportFoods").addEventListener("click", exportFoodsDatabase);
  document.getElementById("adminBulkUploadBtn").addEventListener("click", ()=>document.getElementById("adminBulkFile").click());
  document.getElementById("adminBulkFile").addEventListener("change", (e)=>{ const f=e.target.files[0]; if(f) handleBulkFoodFile(f); e.target.value=''; });
  document.getElementById("adminFoodSearch").addEventListener("input", (e)=>renderAdminFoodsList(e.target.value));
@@ -1252,6 +1353,16 @@ function downloadFoodTemplate(){
  const wb = XLSX.utils.book_new();
  XLSX.utils.book_append_sheet(wb, ws, "Alimentos");
  XLSX.writeFile(wb, "plantilla_alimentos.xlsx");
+}
+function exportFoodsDatabase(){
+ const rows = state.foods.slice().sort((a,b)=>a.c.localeCompare(b.c)||a.n.localeCompare(b.n))
+  .map(f=>[f.n, f.c, f.k, f.p, f.cb, f.f, f.unit||"", f.g||""]);
+ const ws = XLSX.utils.aoa_to_sheet([FOOD_TEMPLATE_HEADERS, ...rows]);
+ ws['!cols'] = FOOD_TEMPLATE_HEADERS.map(()=>({wch:18}));
+ const wb = XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb, ws, "Alimentos");
+ XLSX.writeFile(wb, `base_alimentos_${todayStr()}.xlsx`);
+ toast(`${rows.length} alimentos exportados`);
 }
 function normKey(k){ return String(k).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g,""); }
 function handleBulkFoodFile(file){
