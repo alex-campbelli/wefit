@@ -254,9 +254,9 @@ function round1(v){ return Math.round(v*10)/10; }
 
 /* ============================= MAPPERS (DB row -> app shape) ============================= */
 function mapProfile(r){ return {id:r.id, name:r.name, age:r.age, sex:r.sex, height:r.height, initialWeight:Number(r.initial_weight), currentWeight:Number(r.current_weight), goalWeight:r.goal_weight!=null?Number(r.goal_weight):null, objective:r.objective, activityLevel:r.activity_level, startDate:r.start_date, createdAt:r.created_at, avatarUrl:r.avatar_url||null}; }
-function mapFood(r){ return {id:r.id, n:r.name, c:r.category, unit:r.unit_label, g:r.grams_per_unit?Number(r.grams_per_unit):null, k:Number(r.kcal), p:Number(r.protein), cb:Number(r.carbs), f:Number(r.fat), barcode:r.barcode||null}; }
+function mapFood(r){ return {id:r.id, n:r.name, c:r.category, unit:r.unit_label, g:r.grams_per_unit?Number(r.grams_per_unit):null, k:Number(r.kcal), p:Number(r.protein), cb:Number(r.carbs), f:Number(r.fat), na:Number(r.sodium||0), sug:Number(r.sugars||0), addSug:Number(r.added_sugars||0), sat:Number(r.saturated_fat||0), tfat:Number(r.trans_fat||0), chol:Number(r.cholesterol||0), fib:Number(r.fiber||0), micro:r.micronutrients||[], barcode:r.barcode||null}; }
 function mapWeight(r){ return {id:r.id, profileId:r.user_id, date:r.date, weight:Number(r.weight)}; }
-function mapFoodLog(r){ return {id:r.id, profileId:r.user_id, date:r.date, meal:r.meal, food:r.food_name, qty:Number(r.qty), unitLabel:r.unit_label, kcal:Number(r.kcal), protein:Number(r.protein), carbs:Number(r.carbs), fat:Number(r.fat)}; }
+function mapFoodLog(r){ return {id:r.id, profileId:r.user_id, date:r.date, meal:r.meal, food:r.food_name, qty:Number(r.qty), unitLabel:r.unit_label, kcal:Number(r.kcal), protein:Number(r.protein), carbs:Number(r.carbs), fat:Number(r.fat), sodium:Number(r.sodium||0), sugars:Number(r.sugars||0), addedSugars:Number(r.added_sugars||0), saturatedFat:Number(r.saturated_fat||0), transFat:Number(r.trans_fat||0), cholesterol:Number(r.cholesterol||0), fiber:Number(r.fiber||0), micronutrients:r.micronutrients||[]}; }
 function mapAttendance(r){ return {id:r.id, profileId:r.user_id, date:r.date}; }
 function mapWorkout(r){ return {id:r.id, profileId:r.user_id, date:r.date, muscleGroup:r.muscle_group, exercise:r.exercise, sets:r.sets, reps:r.reps, weight:Number(r.weight)}; }
 function mapGoal(r){ return {id:r.id, profileId:r.user_id, type:r.type, target:Number(r.target), exercise:r.exercise, startValue:r.start_value!=null?Number(r.start_value):0, achieved:r.achieved, achievedDate:r.achieved_date, createdDate:r.created_date}; }
@@ -928,6 +928,7 @@ function openAddFoodModal(pid, meal){
    <button class="btn small secondary" id="mScanBtn" style="flex:1">📷 Codigo de barras</button>
    <button class="btn small secondary" id="mLabelBtn" style="flex:1">✨ Etiqueta (IA)</button>
   </div>
+  ${isPareja()? `<button class="btn small secondary" id="mCopyBtn" style="width:100%;margin-bottom:10px">👥 Copiar de ${getProfile(getPartnerId()).name}</button>` : ''}
   <div class="chiprow" id="mFoodCats" style="margin-bottom:10px">${FOOD_CATS.map(c=>`<span class="chip" data-cat="${c}">${c}</span>`).join('')}</div>
   <div id="mFoodResults" style="max-height:220px;overflow-y:auto;margin-bottom:10px"></div>
   <div id="mFoodDetail"></div>
@@ -939,6 +940,7 @@ function openAddFoodModal(pid, meal){
  document.getElementById("mFoodMeal").addEventListener("change", e=>{ currentFoodMeal = e.target.value; renderMealSoFar(); });
  document.getElementById("mScanBtn").addEventListener("click", ()=>openBarcodeScanner(pid, currentFoodMeal));
  document.getElementById("mLabelBtn").addEventListener("click", ()=>openLabelScannerAI(pid, currentFoodMeal));
+ const copyBtn = document.getElementById("mCopyBtn"); if(copyBtn) copyBtn.addEventListener("click", ()=>openCopyFromPartnerModal(pid, currentFoodMeal));
  document.getElementById("mFoodDone").addEventListener("click", ()=>{ closeModal(); render(); });
 }
 function renderMealSoFar(){
@@ -960,6 +962,47 @@ function renderMealSoFar(){
   state.foodLog = state.foodLog.filter(f=>f.id!==id);
   renderMealSoFar();
  }));
+}
+
+/* ============================= COPIAR COMIDA DE LA PAREJA ============================= */
+function openCopyFromPartnerModal(pid, meal){
+ const partnerId = getPartnerId();
+ const partnerName = getProfile(partnerId).name;
+ const items = state.foodLog.filter(e=>e.profileId===partnerId && e.date===todayStr());
+ if(!items.length){
+  openModal(`<div class="modal-head"><h3>Copiar de ${partnerName}</h3><button class="modal-close" data-close-modal>✕</button></div><div class="empty"><div class="ic">🍽️</div><p>${partnerName} no ha registrado nada hoy todavia.</p></div>`);
+  return;
+ }
+ openModal(`
+  <div class="modal-head"><h3>Copiar de ${partnerName}</h3><button class="modal-close" data-close-modal>✕</button></div>
+  <p class="faint" style="margin-bottom:10px">Elige lo que quieras copiar a tu registro de hoy (se agrega a la misma comida que tenia)</p>
+  <div id="mCopyList">${MEAL_TYPES.map(mt=>{
+    const mealItems = items.filter(e=>e.meal===mt.k);
+    if(!mealItems.length) return '';
+    return `<div style="font-size:13px;font-weight:800;margin:12px 0 4px">${mt.ic} ${mt.l}</div>
+     ${mealItems.map(e=>`<label class="list-item" style="cursor:pointer">
+       <div class="li-l"><input type="checkbox" class="copy-check" data-copyid="${e.id}" style="margin-right:10px;width:18px;height:18px;flex:none"><div><div class="li-name">${e.food}</div><div class="li-sub">${e.qty} ${e.unitLabel} · ${e.kcal} kcal</div></div></div>
+      </label>`).join('')}`;
+  }).join('')}</div>
+  <button class="btn" id="mCopyGo" style="margin-top:12px">Copiar seleccionados</button>
+ `);
+ document.getElementById("mCopyGo").addEventListener("click", async ()=>{
+  const checked = [...document.querySelectorAll(".copy-check:checked")].map(c=>c.dataset.copyid);
+  if(!checked.length){ toast("Selecciona al menos un alimento"); return; }
+  const btn = document.getElementById("mCopyGo"); btn.disabled=true; btn.textContent="Copiando...";
+  const rows = checked.map(id=>{
+   const e = items.find(x=>x.id===id);
+   return { user_id: pid, date: todayStr(), meal: e.meal, food_name: e.food, qty: e.qty, unit_label: e.unitLabel,
+    kcal: e.kcal, protein: e.protein, carbs: e.carbs, fat: e.fat,
+    sodium: e.sodium||0, sugars: e.sugars||0, added_sugars: e.addedSugars||0, saturated_fat: e.saturatedFat||0,
+    trans_fat: e.transFat||0, cholesterol: e.cholesterol||0, fiber: e.fiber||0, micronutrients: e.micronutrients||[] };
+  });
+  const { data, error } = await sb.from('food_log').insert(rows).select();
+  if(error){ toast("Error copiando: " + error.message); btn.disabled=false; btn.textContent="Copiar seleccionados"; return; }
+  state.foodLog.push(...data.map(mapFoodLog));
+  toast(`${data.length} alimento(s) copiados`);
+  openAddFoodModal(pid, meal);
+ });
 }
 
 /* ============================= ESCANER DE CODIGO DE BARRAS (Open Food Facts) ============================= */
@@ -999,7 +1042,9 @@ function stopScanner(){
 async function lookupBarcode(code, pid, meal){
  const own = state.foods.find(f=>f.barcode===code);
  if(own){
-  showScannedProduct({name:own.n, brand:"De tu propia base", kcal:own.k, protein:own.p, carbs:own.cb, fat:own.f, code}, pid, meal);
+  showScannedProduct({name:own.n, brand:"De tu propia base", kcal:own.k, protein:own.p, carbs:own.cb, fat:own.f,
+   sodium:own.na, sugars:own.sug, addedSugars:own.addSug, saturatedFat:own.sat, transFat:own.tfat, cholesterol:own.chol,
+   fiber:own.fib, micronutrients:own.micro||[], code}, pid, meal);
   return;
  }
  openModal(`<div class="modal-head"><h3>Buscando...</h3></div><div class="empty"><div class="ic">🔍</div><p>Consultando Open Food Facts...</p></div>`);
@@ -1024,6 +1069,8 @@ async function lookupBarcode(code, pid, meal){
    name: p.product_name || p.generic_name || "Producto sin nombre",
    brand: p.brands || "",
    kcal: Math.round(kcal||0), protein: n["proteins_100g"]||0, carbs: n["carbohydrates_100g"]||0, fat: n["fat_100g"]||0,
+   sodium: (n["sodium_100g"]||0)*1000, sugars: n["sugars_100g"]||0, addedSugars: n["added-sugars_100g"]||0, saturatedFat: n["saturated-fat_100g"]||0,
+   transFat: n["trans-fat_100g"]||0, cholesterol: (n["cholesterol_100g"]||0)*1000, fiber: n["fiber_100g"]||0, micronutrients: [],
    code
   }, pid, meal);
  }catch(err){
@@ -1061,7 +1108,10 @@ function showScannedProduct(prod, pid, meal){
   const mealSel = document.getElementById("mScanMeal").value;
   const factor = qty/100;
   const row = { user_id: state.myId, date: todayStr(), meal: mealSel, food_name: prod.name, qty, unit_label: "g",
-   kcal: Math.round(prod.kcal*factor), protein: round1(prod.protein*factor), carbs: round1(prod.carbs*factor), fat: round1(prod.fat*factor) };
+   kcal: Math.round(prod.kcal*factor), protein: round1(prod.protein*factor), carbs: round1(prod.carbs*factor), fat: round1(prod.fat*factor),
+   sodium: round1((prod.sodium||0)*factor), sugars: round1((prod.sugars||0)*factor), added_sugars: round1((prod.addedSugars||0)*factor), saturated_fat: round1((prod.saturatedFat||0)*factor),
+   trans_fat: round1((prod.transFat||0)*factor), cholesterol: round1((prod.cholesterol||0)*factor), fiber: round1((prod.fiber||0)*factor),
+   micronutrients: (prod.micronutrients||[]).map(m=>({...m, value: round1((+m.value||0)*factor)})) };
   const { data, error } = await sb.from('food_log').insert(row).select().single();
   if(error){ toast("Error guardando"); btn.disabled = false; return; }
   state.foodLog.push(mapFoodLog(data));
@@ -1128,16 +1178,17 @@ function openLabelScannerAI(pid, meal, barcode){
 function stopLabelStream(){
  if(labelStream){ labelStream.getTracks().forEach(t=>t.stop()); labelStream = null; }
 }
-const LABEL_PROMPT = `Analiza esta foto de una etiqueta de informacion nutricional de un producto alimenticio. Responde SOLO con un objeto JSON valido, sin texto adicional, sin markdown, sin backticks, con exactamente esta forma:
-{"product_name": string o null, "kcal": number o null, "protein": number o null, "carbs": number o null, "fat": number o null}
+const LABEL_PROMPT = `Analiza esta foto de una tabla de informacion nutricional de un producto alimenticio. La tabla puede estar en español, en ingles, o bilingue español/ingles — en cualquier caso interpreta todo y responde siempre en español. Responde SOLO con un objeto JSON valido, sin texto adicional, sin markdown, sin backticks, con exactamente esta forma:
+{"product_name": string o null, "kcal": number o null, "protein": number o null, "carbs": number o null, "fat": number o null, "saturated_fat": number, "trans_fat": number, "cholesterol_mg": number, "fiber": number, "sugars": number, "added_sugars": number, "sodium_mg": number, "micronutrients": [{"name": string, "value": number, "unit": string}]}
 
 Reglas importantes:
-- Todos los valores numericos deben ser POR 100 g o 100 ml del producto (no por porcion).
-- Si la etiqueta muestra columnas separadas de "por 100g/ml" y "por porcion", usa siempre la columna de 100g/ml.
-- Si SOLO muestra valores por porcion, calcula el equivalente por 100g/ml usando el tamano de porcion indicado en la etiqueta.
+- Todos los valores numericos deben ser POR 100 g o 100 ml del producto (no por porcion). Si la etiqueta muestra columnas separadas de "Por 100g/ml" y "Por porcion", usa siempre la columna de 100g/ml. Si SOLO muestra valores por porcion, calcula el equivalente por 100g/ml usando el tamano de porcion indicado en la etiqueta.
 - Si la energia solo aparece en kJ (no en kcal), conviertela dividiendo entre 4.184 y redondea a entero.
 - product_name es el nombre o marca del producto SI es visible en la foto (a veces no lo es, en ese caso usa null).
-- Si algun valor no se puede leer o no esta presente en la etiqueta, usa null en ese campo especifico. No inventes ni asumas valores.`;
+- Para kcal, protein, carbs y fat (Calorias, Proteina, Carbohidratos totales / Total Carbohydrate, Grasa total / Total Fat): si algun valor no se puede leer o no esta presente, usa null en ese campo especifico. No inventes ni asumas valores.
+- Para saturated_fat (Grasa saturada / Saturated Fat), trans_fat (Grasa trans / Trans Fat), cholesterol_mg (Colesterol / Cholesterol, en mg), fiber (Fibra dietaria / Dietary Fiber), sugars (Azucares totales / Sugars) y sodium_mg (Sodio / Sodium, en mg): son parte de la tabla estandar pero a veces no aparecen en la etiqueta. Si no aparecen, usa 0 (no null) en ese campo, ya que su ausencia normalmente significa cantidad insignificante.
+- IMPORTANTE sobre azucares añadidos: muchas etiquetas (formato colombiano Resolucion 810) traen DOS lineas de azucar: "Azucares totales" (toda el azucar, natural + añadida) y, debajo/indentada, "Azucares añadidos" o "Az. Añadidos" (SOLO la agregada en el proceso, nunca mayor que el total). Ese segundo valor va en "added_sugars". Si la etiqueta solo trae una linea de azucar sin distinguir "añadidos" (formato en ingles simple "Sugars"), pon ese valor en "sugars" y usa 0 en "added_sugars". No confundas ni sumes una dentro de la otra.
+- El campo "micronutrients" es una lista de SOLAMENTE estos nutrientes: Grasa poliinsaturada, Vitamina A, Vitamina D, Vitamina B1, Vitamina B2, Vitamina B3, Vitamina B6, Vitamina B9, Calcio, Hierro, Zinc, Magnesio. Incluye cada uno UNICAMENTE si aparece impreso en esa etiqueta especifica — no los inventes ni los completes con 0 si no aparecen, porque su ausencia en esta seccion no significa necesariamente que sea cero, solo que el fabricante no lo reporto (a diferencia de los campos de arriba, que si son obligatorios). Usa exactamente esos nombres en español en el campo "name" (traduce si la etiqueta esta en ingles: "Polyunsaturated Fat"->"Grasa poliinsaturada", "Thiamine"/"Vitamin B1"->"Vitamina B1", "Riboflavin"/"Vitamin B2"->"Vitamina B2", "Niacin"/"Vitamin B3"->"Vitamina B3", "Folic Acid"/"Vitamin B9"/"Folate"->"Vitamina B9", "Calcium"->"Calcio", "Iron"->"Hierro"). Usa el valor y la unidad tal como aparecen en la columna de 100g/ml de la etiqueta (mg, µg, g, etc). Ignora cualquier otro nutriente que no este en esta lista de 12 (ej. Vitamina C, Potasio, Fosforo — esos no interesan y no deben incluirse).`;
 async function runLabelAI(canvas, pid, meal, barcode){
  openModal(`<div class="modal-head"><h3>Leyendo etiqueta con IA...</h3></div><div class="empty"><div class="ic">✨</div><p>Esto puede tardar unos segundos</p></div>`);
  try{
@@ -1169,6 +1220,29 @@ function showLabelResultAI(parsed, pid, meal, barcode){
    <div class="field"><label>Carbos /100g</label><input id="lCarb" type="number" step="any" value="${parsed.carbs ?? ''}"></div>
    <div class="field"><label>Grasa /100g</label><input id="lFat" type="number" step="any" value="${parsed.fat ?? ''}"></div>
   </div>
+  <details style="margin-bottom:12px">
+   <summary class="faint" style="cursor:pointer">Otros nutrientes (opcional)</summary>
+   <div class="field-row" style="margin-top:10px">
+    <div class="field"><label>Sodio /100g (mg)</label><input id="lSodium" type="number" step="any" value="${parsed.sodium_mg ?? 0}"></div>
+    <div class="field"><label>Azucares totales /100g (g)</label><input id="lSugars" type="number" step="any" value="${parsed.sugars ?? 0}"></div>
+   </div>
+   <div class="field-row">
+    <div class="field"><label>Azucares añadidos /100g (g)</label><input id="lAddedSugars" type="number" step="any" value="${parsed.added_sugars ?? 0}"></div>
+    <div class="field"><label>Grasa saturada /100g (g)</label><input id="lSatFat" type="number" step="any" value="${parsed.saturated_fat ?? 0}"></div>
+   </div>
+   <div class="field-row">
+    <div class="field"><label>Grasa trans /100g (g)</label><input id="lTransFat" type="number" step="any" value="${parsed.trans_fat ?? 0}"></div>
+    <div class="field"><label>Colesterol /100g (mg)</label><input id="lChol" type="number" step="any" value="${parsed.cholesterol_mg ?? 0}"></div>
+   </div>
+   <div class="field-row">
+    <div class="field"><label>Fibra /100g (g)</label><input id="lFiber" type="number" step="any" value="${parsed.fiber ?? 0}"></div>
+   </div>
+  </details>
+  ${(parsed.micronutrients && parsed.micronutrients.length) ? `
+  <div class="card" style="margin-bottom:12px">
+   <b style="font-size:13px">✨ Micronutrientes detectados /100g</b>
+   ${parsed.micronutrients.map(m=>`<div class="li-sub" style="margin-top:4px">${m.name}: ${m.value} ${m.unit}</div>`).join('')}
+  </div>` : ''}
   <div class="field-row">
    <div class="field"><label>Cantidad que comiste (g)</label><input id="lQty" type="number" value="100"></div>
    <div class="field"><label>Comida</label><select id="lMeal">${MEAL_TYPES.map(m=>`<option value="${m.k}" ${m.k===meal?'selected':''}>${m.ic} ${m.l}</option>`).join('')}</select></div>
@@ -1185,7 +1259,17 @@ function showLabelResultAI(parsed, pid, meal, barcode){
   const protein = +document.getElementById("lProt").value || 0;
   const carbs = +document.getElementById("lCarb").value || 0;
   const fat = +document.getElementById("lFat").value || 0;
-  const foodRow = { name, category: document.getElementById("lCat").value, kcal, protein, carbs, fat, unit_label:null, grams_per_unit:null, barcode: barcode||null };
+  const sodium = +document.getElementById("lSodium").value || 0;
+  const sugars = +document.getElementById("lSugars").value || 0;
+  const addedSugars = +document.getElementById("lAddedSugars").value || 0;
+  const satFat = +document.getElementById("lSatFat").value || 0;
+  const transFat = +document.getElementById("lTransFat").value || 0;
+  const chol = +document.getElementById("lChol").value || 0;
+  const fiber = +document.getElementById("lFiber").value || 0;
+  const micro = parsed.micronutrients || [];
+  const foodRow = { name, category: document.getElementById("lCat").value, kcal, protein, carbs, fat,
+   sodium, sugars, added_sugars: addedSugars, saturated_fat: satFat, trans_fat: transFat, cholesterol: chol, fiber,
+   micronutrients: micro, unit_label:null, grams_per_unit:null, barcode: barcode||null };
   const { data: newFood, error: foodErr } = await sb.from('foods').insert(foodRow).select().single();
   if(foodErr){ toast("Error guardando en la base: " + foodErr.message); btn.disabled=false; btn.textContent="Guardar y agregar a mi base"; return; }
   state.foods.push(mapFood(newFood));
@@ -1193,7 +1277,10 @@ function showLabelResultAI(parsed, pid, meal, barcode){
   const factor = qty/100;
   const mealSel = document.getElementById("lMeal").value;
   const logRow = { user_id: pid, date: todayStr(), meal: mealSel, food_name: name, qty, unit_label: "g",
-   kcal: Math.round(kcal*factor), protein: round1(protein*factor), carbs: round1(carbs*factor), fat: round1(fat*factor) };
+   kcal: Math.round(kcal*factor), protein: round1(protein*factor), carbs: round1(carbs*factor), fat: round1(fat*factor),
+   sodium: round1(sodium*factor), sugars: round1(sugars*factor), added_sugars: round1(addedSugars*factor), saturated_fat: round1(satFat*factor),
+   trans_fat: round1(transFat*factor), cholesterol: round1(chol*factor), fiber: round1(fiber*factor),
+   micronutrients: micro.map(m=>({...m, value: round1((+m.value||0)*factor)})) };
   const { data: logData, error: logErr } = await sb.from('food_log').insert(logRow).select().single();
   if(logErr){ toast("Se guardo en la base pero no se pudo registrar hoy: " + logErr.message); btn.disabled=false; return; }
   state.foodLog.push(mapFoodLog(logData));
@@ -1621,6 +1708,24 @@ function openFoodEditModal(food, onSaved){
    <div class="field"><label>Unidad (opcional, ej. "unidad")</label><input id="fUnit" value="${food&&food.unit?food.unit:''}"></div>
    <div class="field"><label>Gramos por unidad</label><input id="fGrams" type="number" value="${food&&food.g?food.g:''}"></div>
   </div>
+  <details style="margin-bottom:12px">
+   <summary class="faint" style="cursor:pointer">Otros nutrientes (opcional)</summary>
+   <div class="field-row" style="margin-top:10px">
+    <div class="field"><label>Sodio /100g (mg)</label><input id="fSodium" type="number" step="any" value="${food&&food.na?food.na:0}"></div>
+    <div class="field"><label>Azucares totales /100g (g)</label><input id="fSugars" type="number" step="any" value="${food&&food.sug?food.sug:0}"></div>
+   </div>
+   <div class="field-row">
+    <div class="field"><label>Azucares añadidos /100g (g)</label><input id="fAddedSugars" type="number" step="any" value="${food&&food.addSug?food.addSug:0}"></div>
+    <div class="field"><label>Grasa saturada /100g (g)</label><input id="fSatFat" type="number" step="any" value="${food&&food.sat?food.sat:0}"></div>
+   </div>
+   <div class="field-row">
+    <div class="field"><label>Grasa trans /100g (g)</label><input id="fTransFat" type="number" step="any" value="${food&&food.tfat?food.tfat:0}"></div>
+    <div class="field"><label>Colesterol /100g (mg)</label><input id="fChol" type="number" step="any" value="${food&&food.chol?food.chol:0}"></div>
+   </div>
+   <div class="field-row">
+    <div class="field"><label>Fibra /100g (g)</label><input id="fFiber" type="number" step="any" value="${food&&food.fib?food.fib:0}"></div>
+   </div>
+  </details>
   <button class="btn" id="fSave">${isNew?'Crear':'Guardar cambios'}</button>`);
  document.getElementById("fSave").addEventListener("click", async ()=>{
   const name=document.getElementById("fName").value.trim();
@@ -1629,6 +1734,10 @@ function openFoodEditModal(food, onSaved){
   const row = { name, category:document.getElementById("fCat").value,
    kcal:+document.getElementById("fKcal").value||0, protein:+document.getElementById("fProt").value||0,
    carbs:+document.getElementById("fCarb").value||0, fat:+document.getElementById("fFat").value||0,
+   sodium:+document.getElementById("fSodium").value||0, sugars:+document.getElementById("fSugars").value||0,
+   added_sugars:+document.getElementById("fAddedSugars").value||0,
+   saturated_fat:+document.getElementById("fSatFat").value||0, trans_fat:+document.getElementById("fTransFat").value||0,
+   cholesterol:+document.getElementById("fChol").value||0, fiber:+document.getElementById("fFiber").value||0,
    unit_label: document.getElementById("fUnit").value.trim()||null,
    grams_per_unit: document.getElementById("fGrams").value? +document.getElementById("fGrams").value : null };
   if(isNew){
